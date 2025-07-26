@@ -256,15 +256,6 @@ $$\mathcal{L}_{DAE} = -\log P(x|\tilde{x})$$
 - `[NLG]`：类GPT的生成
 
 **混合策略：**
-```python
-# 伪代码
-if random() < p1:
-    objective = causal_lm
-elif random() < p1 + p2:
-    objective = prefix_lm  # 前缀双向，后续单向
-else:
-    objective = span_corruption
-```
 
 **🔬 研究线索：** 
 - 最优的混合比例是什么？
@@ -344,18 +335,9 @@ Output: Bonjour le monde
 **策略设计：**
 
 1. **数据混合：**
-   ```python
-   # 动态采样
-   p_general = 0.7
-   p_domain = 0.3
-   
-   batch = []
-   for _ in range(batch_size):
-       if random() < p_general:
-           batch.append(sample_general())
-       else:
-           batch.append(sample_domain())
-   ```
+   - 通用数据：70-80%保持基础能力
+   - 领域数据：20-30%提升专业性
+   - 动态调整比例based on validation metrics
 
 2. **课程学习：**
    - 阶段1：100%通用数据
@@ -422,14 +404,6 @@ Output: Bonjour le monde
 ### 2.3.2 数据清洗流程
 
 **1. 语言检测与过滤**
-```python
-# 伪代码
-def language_filter(text):
-    lang_score = detect_language(text)
-    if lang_score['en'] < 0.95:
-        return None
-    return text
-```
 
 **2. 质量过滤**
 - 长度过滤：太短或太长的文档
@@ -454,42 +428,6 @@ def language_filter(text):
 <summary>查看答案</summary>
 
 **质量评分系统：**
-
-```python
-def quality_score(document):
-    scores = {}
-    
-    # 1. 语言质量（用小模型的困惑度）
-    scores['perplexity'] = -log(small_lm.perplexity(document))
-    
-    # 2. 信息密度（压缩率）
-    compressed_size = len(compress(document))
-    scores['info_density'] = len(document) / compressed_size
-    
-    # 3. 文本多样性（词汇丰富度）
-    tokens = tokenize(document)
-    scores['diversity'] = len(set(tokens)) / len(tokens)
-    
-    # 4. 结构化程度（段落、句子分布）
-    sentences = sent_tokenize(document)
-    scores['structure'] = std([len(s) for s in sentences])
-    
-    # 5. 领域相关性（可选）
-    if domain_keywords:
-        scores['domain'] = keyword_density(document, domain_keywords)
-    
-    # 加权综合
-    weights = {
-        'perplexity': 0.3,
-        'info_density': 0.2,
-        'diversity': 0.2,
-        'structure': 0.2,
-        'domain': 0.1
-    }
-    
-    final_score = sum(scores[k] * weights[k] for k in scores)
-    return final_score, scores
-```
 
 **阈值设置：**
 - 使用人工标注的高质量样本校准
@@ -531,24 +469,6 @@ def quality_score(document):
 - 缺点：浪费计算或丢失信息
 
 **策略2：文档拼接**
-```python
-def pack_documents(docs, max_length, sep_token):
-    packed = []
-    current = []
-    current_length = 0
-    
-    for doc in docs:
-        doc_tokens = tokenize(doc) + [sep_token]
-        if current_length + len(doc_tokens) > max_length:
-            packed.append(current[:max_length])
-            current = doc_tokens
-            current_length = len(doc_tokens)
-        else:
-            current.extend(doc_tokens)
-            current_length += len(doc_tokens)
-    
-    return packed
-```
 
 **策略3：动态batching**
 - 相似长度的序列组成batch
@@ -557,16 +477,6 @@ def pack_documents(docs, max_length, sep_token):
 ### 2.3.5 数据配比与采样
 
 **多源数据的配比：**
-```python
-# 示例配比
-data_sources = {
-    'web': 0.60,
-    'books': 0.15,
-    'wikipedia': 0.05,
-    'code': 0.10,
-    'academic': 0.10
-}
-```
 
 **采样策略：**
 1. **静态配比**：预先混合
@@ -592,15 +502,7 @@ data_sources = {
    - 模板重复：结构相同，内容不同
 
 2. **实验设置：**
-   ```python
-   # 不同重复比例
-   duplicate_ratios = [0%, 10%, 25%, 50%, 75%]
    
-   for ratio in duplicate_ratios:
-       dataset = create_dataset_with_duplicates(clean_data, ratio)
-       model = train_model(dataset)
-       metrics = evaluate(model)
-   ```
 
 3. **预期影响：**
    - **记忆 vs 泛化**：高重复导致过拟合
@@ -694,16 +596,6 @@ $$\theta_t = \theta_{t-1} - \alpha \left(\frac{m_t}{\sqrt{v_t} + \epsilon} + \la
 $$\eta_t = \eta_{min} + \frac{1}{2}(\eta_{max} - \eta_{min})(1 + \cos(\pi t / T))$$
 
 **2. 线性预热 + 余弦衰减**
-```python
-def lr_schedule(step, warmup_steps, total_steps, max_lr):
-    if step < warmup_steps:
-        # 线性预热
-        return max_lr * step / warmup_steps
-    else:
-        # 余弦衰减
-        progress = (step - warmup_steps) / (total_steps - warmup_steps)
-        return max_lr * 0.5 * (1 + cos(pi * progress))
-```
 
 **3. 常数学习率（with warmup）**
 - 简单但有效
@@ -730,14 +622,7 @@ def lr_schedule(step, warmup_steps, total_steps, max_lr):
    - 周期性重启
 
 2. **观察指标：**
-   ```python
-   metrics = {
-       'train_loss': [],
-       'grad_norm': [],
-       'weight_change': [],  # ||θ_t - θ_{t-1}||
-       'val_perplexity': []
-   }
-   ```
+   
 
 3. **预期发现：**
    - **固定LR**：
@@ -766,16 +651,6 @@ def lr_schedule(step, warmup_steps, total_steps, max_lr):
 **问题：**单GPU内存有限，如何实现大批量训练？
 
 **梯度累积：**
-```python
-optimizer.zero_grad()
-for i in range(accumulation_steps):
-    loss = model(get_batch()) / accumulation_steps
-    loss.backward()
-    
-if (step + 1) % accumulation_steps == 0:
-    optimizer.step()
-    optimizer.zero_grad()
-```
 
 **有效批大小计算：**
 ```
@@ -791,17 +666,6 @@ effective_batch_size =
 ### 2.4.4 混合精度训练
 
 **FP16/BF16训练：**
-```python
-# PyTorch自动混合精度
-with autocast():
-    output = model(input)
-    loss = loss_fn(output, target)
-
-# 梯度缩放防止下溢
-scaler.scale(loss).backward()
-scaler.step(optimizer)
-scaler.update()
-```
 
 **BF16 vs FP16：**
 - BF16：动态范围大，不需要loss scaling
@@ -816,21 +680,8 @@ scaler.update()
 ### 2.4.5 训练稳定性技巧
 
 **1. 梯度裁剪**
-```python
-# 全局范数裁剪
-torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-```
 
 **2. 损失峰值检测与恢复**
-```python
-if loss > loss_threshold:
-    print(f"Loss spike detected: {loss}")
-    # 从检查点恢复
-    model.load_state_dict(last_stable_checkpoint)
-    # 降低学习率
-    for param_group in optimizer.param_groups:
-        param_group['lr'] *= 0.5
-```
 
 **3. 参数初始化**
 - 标准差缩放：$\sigma = \sqrt{2 / n_{in}}$
@@ -887,14 +738,7 @@ if loss > loss_threshold:
    - 需要至少4-way分割
 
 3. **推荐配置：**
-   ```python
-   config = {
-       'tensor_parallel': 4,    # 同一节点内
-       'pipeline_parallel': 2,  # 跨节点
-       'data_parallel': 16      # 剩余的并行度
-   }
-   # 验证：4 × 2 × 16 = 128 ✓
-   ```
+   
 
 4. **通信分析：**
    - TP：AllReduce within node (NVLink)
@@ -911,17 +755,6 @@ if loss > loss_threshold:
 ### 2.4.7 检查点策略
 
 **保存策略：**
-```python
-def save_checkpoint(model, optimizer, step, path):
-    checkpoint = {
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-        'step': step,
-        'rng_state': torch.get_rng_state(),
-        'config': model.config
-    }
-    torch.save(checkpoint, path)
-```
 
 **检查点频率：**
 - 时间间隔：每X小时
@@ -1027,25 +860,6 @@ $$C_{total} = 6ND$$
 （因子6来自前向2+反向4）
 
 **内存需求估算：**
-```python
-def estimate_memory(model_size_B, batch_size, seq_len):
-    # 参数内存
-    params_memory = model_size_B * 2  # FP16
-    
-    # 梯度内存
-    gradients_memory = model_size_B * 2
-    
-    # 优化器状态 (Adam)
-    optimizer_memory = model_size_B * 8
-    
-    # 激活值 (粗略估计)
-    activations_memory = batch_size * seq_len * model_size_B * 0.1
-    
-    total_GB = (params_memory + gradients_memory + 
-                optimizer_memory + activations_memory)
-    
-    return total_GB
-```
 
 #### 练习 2.9：计算训练成本
 估算训练一个7B参数模型到Chinchilla-optimal所需的GPU小时数。
@@ -1089,13 +903,6 @@ def estimate_memory(model_size_B, batch_size, seq_len):
 ### 2.5.4 效率优化技术
 
 **1. 激活检查点（Gradient Checkpointing）**
-```python
-# 不保存中间激活，用重计算换内存
-def checkpoint_forward(module, *inputs):
-    # 前向时不保存中间结果
-    # 反向时重新计算
-    return checkpoint(module, *inputs)
-```
 
 内存节省：$O(\sqrt{n_{layers}})$
 计算开销：~33%额外前向计算
@@ -1119,13 +926,6 @@ def checkpoint_forward(module, *inputs):
 
 **深度 vs 宽度：**
 给定参数预算，如何分配？
-
-```python
-# 经验公式
-d_model = 128 * n_layers^0.5
-n_heads = d_model / 64
-d_ff = 4 * d_model
-```
 
 **关键维度的影响：**
 1. **层数（depth）**：
@@ -1168,21 +968,7 @@ d_ff = 4 * d_model
    - SwiGLU需要调整以保持参数量
 
 4. **验证计算：**
-   ```python
-   def count_params(n_layers, d_model, n_heads, d_ff, vocab_size):
-       # Embedding
-       embed = vocab_size * d_model
-       
-       # Attention (Q,K,V,O)
-       attn = n_layers * 4 * d_model * d_model
-       
-       # FFN (2 layers for standard, 3 for SwiGLU)
-       ffn = n_layers * 2 * d_model * d_ff
-       
-       # LayerNorm (negligible)
-       
-       return embed + attn + ffn
-   ```
+   
 
 </details>
 
@@ -1278,24 +1064,6 @@ $$PPL = \exp\left(-\frac{1}{N}\sum_{i=1}^{N} \log p(x_i|x_{<i})\right)$$
 | TruthfulQA | 真实性 | 事实准确性 | 真实率 |
 
 **评估协议：**
-```python
-def evaluate_zero_shot(model, dataset):
-    correct = 0
-    for example in dataset:
-        # 构造prompt
-        prompt = format_zero_shot(example)
-        
-        # 生成或打分
-        if task_type == "generation":
-            output = model.generate(prompt)
-            correct += check_answer(output, example.answer)
-        else:  # multiple choice
-            scores = [model.score(prompt + choice) 
-                     for choice in example.choices]
-            correct += argmax(scores) == example.label
-    
-    return correct / len(dataset)
-```
 
 ### 2.6.3 Few-shot vs Zero-shot
 
@@ -1330,27 +1098,6 @@ French: [模型预测]"
 ### 2.6.4 在线评估与人类偏好
 
 **A/B测试框架：**
-```python
-def online_evaluation(model_a, model_b, user_queries):
-    preferences = []
-    
-    for query in user_queries:
-        response_a = model_a.generate(query)
-        response_b = model_b.generate(query)
-        
-        # 随机顺序展示
-        if random() > 0.5:
-            show(response_a, response_b)
-            pref = get_user_preference()
-        else:
-            show(response_b, response_a)  
-            pref = 1 - get_user_preference()
-            
-        preferences.append(pref)
-    
-    win_rate = mean(preferences)
-    return win_rate, confidence_interval(preferences)
-```
 
 **人类评估维度：**
 1. **有用性（Helpfulness）**
@@ -1362,16 +1109,6 @@ def online_evaluation(model_a, model_b, user_queries):
 ### 2.6.5 诊断工具与分析方法
 
 **1. 注意力可视化**
-```python
-def visualize_attention(model, text):
-    tokens = tokenize(text)
-    _, attention_weights = model(tokens, return_attention=True)
-    
-    # 聚合多层多头
-    avg_attention = attention_weights.mean(dim=[0, 1])  # [seq, seq]
-    
-    plot_heatmap(avg_attention, tokens, tokens)
-```
 
 **发现的模式：**
 - 位置偏差
@@ -1379,17 +1116,6 @@ def visualize_attention(model, text):
 - 长程依赖
 
 **2. 探针（Probing）分析**
-```python
-def probe_linguistic_knowledge(model, layer_idx):
-    # 提取中间表示
-    representations = extract_representations(model, layer_idx)
-    
-    # 训练线性分类器
-    probe = LinearProbe()
-    probe.fit(representations, linguistic_labels)
-    
-    return probe.accuracy
-```
 
 **可探测的知识：**
 - 词性标注
@@ -1448,15 +1174,7 @@ def probe_linguistic_knowledge(model, layer_idx):
    - **安全性**：内容适龄性
 
 2. **评估数据集构建：**
-   ```python
-   dataset = {
-       "factual_qa": subject_questions,      # 学科知识
-       "explanation": concept_explanations,   # 概念解释
-       "scaffolding": problem_sequences,      # 渐进教学
-       "misconception": common_errors,        # 纠错能力
-       "age_appropriate": content_filters     # 内容筛选
-   }
-   ```
+   
 
 3. **自动化指标：**
    - 知识准确率
@@ -1475,27 +1193,7 @@ def probe_linguistic_knowledge(model, layer_idx):
    - 学习兴趣变化
 
 6. **A/B测试设计：**
-   ```python
-   def educational_ab_test(model_a, model_b):
-       students = stratified_sample(student_pool)
-       
-       for student in students:
-           # 随机分配模型
-           model = random_assign(model_a, model_b)
-           
-           # 教学会话
-           session = conduct_tutoring(model, student)
-           
-           # 多维度评估
-           metrics = {
-               "understanding": pre_post_test(student),
-               "engagement": session.interaction_count,
-               "satisfaction": student.rating,
-               "efficiency": session.duration
-           }
-           
-       return aggregate_metrics(metrics)
-   ```
+   
 
 </details>
 

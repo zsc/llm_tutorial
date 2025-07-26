@@ -107,7 +107,6 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 <details>
 <summary>查看答案</summary>
 
-
 **实验设计：**
 
 1. **局部注意力模式的输入：**
@@ -159,7 +158,6 @@ Transformer中使用了两种注意力：
 
 <details>
 <summary>查看答案</summary>
-
 
 **因果掩码的必要性：**
 
@@ -406,10 +404,6 @@ $$\begin{bmatrix} PE_{(pos+k,2i)} \\ PE_{(pos+k,2i+1)} \end{bmatrix} = \begin{bm
 
 许多现代模型使用可学习的位置嵌入：
 
-```python
-position_embeddings = nn.Embedding(max_position, d_model)
-```
-
 **优势：**
 - 灵活性：可以学习任意位置模式
 - 简单：实现和理解都更直接
@@ -521,27 +515,10 @@ RoPE已成为许多现代LLM的默认选择（如LLaMA），因为它结合了�
 **实现要点：**
 
 1. **RoPE实现：**
-   ```python
-   # 伪代码
-   def rope(q, k, positions):
-       # 计算旋转角度
-       theta = positions * inverse_freq
-       # 应用旋转
-       q_rot = apply_rotation(q, theta)
-       k_rot = apply_rotation(k, theta)
-       return q_rot, k_rot
-   ```
+   
 
 2. **ALiBi实现：**
-   ```python
-   # 伪代码
-   def alibi(attention_scores, positions):
-       # 计算相对位置
-       rel_pos = positions[:, None] - positions[None, :]
-       # 应用斜率
-       biases = -abs(rel_pos) * slopes
-       return attention_scores + biases
-   ```
+   
 
 3. **性能比较：**
    - RoPE：需要修改Q、K，计算旋转
@@ -729,12 +706,7 @@ $$\text{GeGLU}(x) = (xW_1 + b_1) \otimes \text{GELU}(xW_g + b_g)$$
 **实验设计：**
 
 1. **稀疏度度量：**
-   ```python
-   # 伪代码
-   def sparsity(activations, threshold=0.1):
-       # 计算接近0的激活比例
-       return (abs(activations) < threshold).mean()
-   ```
+   
 
 2. **层间分析：**
    - 浅层：激活相对密集，学习局部特征
@@ -931,9 +903,6 @@ $$\text{RMSNorm}(x) = \frac{x}{\text{RMS}(x)} \cdot \gamma$$
 - 防止残差累积过大
 
 **3. 子层输出缩放**
-```python
-output = x + sublayer(x) / sqrt(2 * n_layer)
-```
 
 #### 练习 1.12：设计初始化实验
 实验不同初始化策略对深层Transformer训练的影响：
@@ -979,9 +948,7 @@ output = x + sublayer(x) / sqrt(2 * n_layer)
 ### 1.5.6 稳定训练的其他技巧
 
 **1. 梯度裁剪**
-```python
-torch.nn.utils.clip_grad_norm_(parameters, max_norm=1.0)
-```
+
 - 防止梯度爆炸
 - 特别重要在训练初期
 
