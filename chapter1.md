@@ -59,16 +59,13 @@ Attention(Q, K, V) = softmax(QK^T / √d_k)V
 
 标准注意力的计算复杂度为O(n²d)，其中n是序列长度，d是隐藏维度。这个二次复杂度是长序列处理的主要瓶颈。
 
-<h4>练习 1.1：证明注意力计算复杂度</h4>
-<p>证明自注意力机制的时间复杂度为O(n²d)，空间复杂度为O(n²)。分析哪些操作是瓶颈。</p>
+#### 练习 1.1：证明注意力计算复杂度
+证明自注意力机制的时间复杂度为O(n²d)，空间复杂度为O(n²)。分析哪些操作是瓶颈。
 
-<div class="hint">
-提示：分别考虑QK^T的计算（O(n²d)）和softmax(·)V的计算（O(n²d)）。
-</div>
+**提示**：分别考虑QK^T的计算（O(n²d)）和softmax(·)V的计算（O(n²d)）。
 
-<details class="answer-section">
-<summary class="answer-toggle">查看答案</summary>
-<div class="answer-content">
+<details>
+<summary>查看答案</summary>
 
 **时间复杂度分析：**
 
@@ -98,9 +95,7 @@ Attention(Q, K, V) = softmax(QK^T / √d_k)V
 - 当d >> n时（如短序列但模型很宽），计算瓶颈在矩阵乘法的d维度
 - 实践中通常n更容易成为瓶颈，因此有了各种稀疏注意力的研究
 
-</div>
 </details>
-</div>
 
 ### 1.1.4 注意力的几何解释
 
@@ -110,13 +105,12 @@ Attention(Q, K, V) = softmax(QK^T / √d_k)V
 2. **信息路由**：注意力权重决定了信息如何从不同位置流向当前位置
 3. **动态感受野**：不同于CNN的固定感受野，注意力提供了动态的、内容相关的感受野
 
-<div class="exercise">
-<h4>练习 1.2：注意力模式可视化</h4>
-<p>设计一个实验来可视化不同类型输入的注意力模式。思考：什么样的输入会产生局部注意力模式？什么样的会产生全局模式？</p>
+#### 练习 1.2：注意力模式可视化
+设计一个实验来可视化不同类型输入的注意力模式。思考：什么样的输入会产生局部注意力模式？什么样的会产生全局模式？
 
-<details class="answer-section">
-<summary class="answer-toggle">查看答案</summary>
-<div class="answer-content">
+<details>
+<summary>查看答案</summary>
+
 
 **实验设计：**
 
@@ -140,9 +134,7 @@ Attention(Q, K, V) = softmax(QK^T / √d_k)V
    - 高层出现更多全局模式
    - 特定头可能专门化于特定模式
 
-</div>
 </details>
-</div>
 
 ### 1.1.5 注意力的信息论视角
 
@@ -152,10 +144,7 @@ Attention(Q, K, V) = softmax(QK^T / √d_k)V
 - **相关性提取**：通过注意力权重保留最相关的信息
 - **条件独立性**：假设给定注意力权重后，输出与原始输入条件独立
 
-<div class="research-note">
-如果放松softmax约束（如使用sparsemax或其他稀疏化方法），会如何影响信息传递？稀疏注意力是否能在保持性能的同时提供更好的可解释性？这是当前研究的热点方向。
-</div>
-
+**🔬 研究线索：** 如果放松softmax约束（如使用sparsemax或其他稀疏化方法），会如何影响信息传递？稀疏注意力是否能在保持性能的同时提供更好的可解释性？这是当前研究的热点方向。
 ### 1.1.6 自注意力vs交叉注意力
 
 Transformer中使用了两种注意力：
@@ -168,18 +157,13 @@ Transformer中使用了两种注意力：
    - 用途：encoder-decoder架构中的信息传递
    - 特点：不需要掩码，可以看到完整的源序列
 
-<div class="alternative">
-<strong>设计选择：</strong>
-在某些架构中（如GPT），只使用自注意力。这简化了架构但限制了某些能力。在多模态模型中，交叉注意力变得更加重要，用于融合不同模态的信息。
-</div>
+**⚡ 设计选择：** 在某些架构中（如GPT），只使用自注意力。这简化了架构但限制了某些能力。在多模态模型中，交叉注意力变得更加重要，用于融合不同模态的信息。
+#### 练习 1.3：因果掩码的必要性
+解释为什么自回归模型需要因果掩码。如果不使用会发生什么？设计一个实验来验证。
 
-<div class="exercise">
-<h4>练习 1.3：因果掩码的必要性</h4>
-<p>解释为什么自回归模型需要因果掩码。如果不使用会发生什么？设计一个实验来验证。</p>
+<details>
+<summary>查看答案</summary>
 
-<details class="answer-section">
-<summary class="answer-toggle">查看答案</summary>
-<div class="answer-content">
 
 **因果掩码的必要性：**
 
@@ -210,3 +194,9 @@ Transformer中使用了两种注意力：
    - 训练两个模型：有/无因果掩码
    - 测试任务：简单序列延续
    - 预期结果：无掩码模型在训练集上loss极低，但推理时完全失败
+
+</details>
+
+---
+
+[← 返回目录](index.md) | [下一节：多头注意力与设计选择 →](#section2)
