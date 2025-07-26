@@ -1,11 +1,11 @@
 （交流可以用英文，本文档中文，保留这句）
 
-# 语言模型项目说明
+# LLM tutorial 项目说明
 
 ## 项目目标
-编写一份语言设计的全面教程markdown，要包含大量的习题和参考答案（答案默认折叠）。合适时提及相关 pytorch 函数名但不写代码。
-文件组织方式为：index.md + chapter1.md + chapter2.md + ...
-index.md 包含指向各章节的 link
+编写一份LLM 模型设计和训练推理设计的全面教程markdown，要包含大量的习题和参考答案（答案默认折叠）。合适时提及相关 pytorch 函数名但不写代码。
+项目特色是，包含大量的可继续研究的线索。
+
 
 ## 工具说明
 当需要时，可以通过 `gemini -p "深入回答：<要问的问题> -m gemini-2.5-pro"` 来获取 gemini-2.5-pro 的参考意见(gemini 系只问 gemini-2.5-pro 不问别人)
@@ -14,6 +14,8 @@ index.md 包含指向各章节的 link
 ## 教程大纲
 
 ### 最终章节结构
+文件组织方式为：index.md + chapter1.md + chapter2.md + ...
+index.md 包含指向各章节的 link
 
 ### 内容设计原则
 
