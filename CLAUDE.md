@@ -51,12 +51,7 @@ index.md 包含指向各章节的 link
 - 这样确保每次生成的内容精炼且高质量
 
 ### 统一样式要求
-
-1. **使用共享CSS/JS文件** - 将通用样式抽取到 `common.css` 和 `common.js`
 2. **练习答案默认折叠** - 使用统一的折叠/展开机制
-3. **响应式设计** - 确保移动端友好
-4. **数学公式** - 使用KaTeX渲染
-5. **代码高亮** - 使用Prism.js或类似库
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
