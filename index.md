@@ -129,14 +129,3 @@
 2. **动手实践**: 完成每章的编程练习，加深理解
 3. **深入研究**: 追踪提供的研究线索，探索感兴趣的方向
 4. **批判思考**: 思考每个设计选择的trade-off，没有完美的方案
-
-## 资源链接
-
-- [课程代码仓库](https://github.com/example/llm-tutorial)
-- [讨论论坛](https://forum.example.com/llm-tutorial)
-- [相关论文集合](papers.md)
-
----
-
-<link rel="stylesheet" href="common.css">
-<script src="common.js"></script>
