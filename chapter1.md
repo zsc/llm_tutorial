@@ -19,11 +19,11 @@ Transformer架构自2017年提出以来，已成为现代大型语言模型的�
 
 ### 1.1.1 从加权平均到注意力
 
-注意力机制的本质是一种动态的加权平均。给定一个查询(query) $$q$$和一组键值对(key-value pairs) $$\{(k_1,v_1), (k_2,v_2), ..., (k_n,v_n)\}$$，注意力机制计算：
+注意力机制的本质是一种动态的加权平均。给定一个查询(query) $q$和一组键值对(key-value pairs) $\{(k_1,v_1), (k_2,v_2), ..., (k_n,v_n)\}$，注意力机制计算：
 
 $$\text{Attention}(q, K, V) = \sum_i \alpha(q, k_i) \cdot v_i$$
 
-其中 $$\alpha(q, k_i)$$ 是注意力权重，满足$$\sum_i \alpha(q, k_i) = 1$$。
+其中 $\alpha(q, k_i)$ 是注意力权重，满足$\sum_i \alpha(q, k_i) = 1$。
 
 ### 1.1.2 缩放点积注意力
 
@@ -39,7 +39,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 - 可学习性：通过学习Q、K的表示空间来调整相似度计算
 
 替代方案：
-- 加性注意力：$$\alpha(q, k) = v^T \tanh(W_q q + W_k k)$$
+- 加性注意力：$\alpha(q, k) = v^T \tanh(W_q q + W_k k)$
 - 乘性注意力的其他形式：如使用其他核函数
 - 学习的相似度函数：通过神经网络计算相似度
 
@@ -47,48 +47,48 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 
 **2. 为什么要缩放？**
 
-当$$d_k$$较大时，点积的方差会随维度增长，导致softmax的梯度趋近于0。缩放因子$$1/\sqrt{d_k}$$保证了点积的方差稳定在1附近。
+当$d_k$较大时，点积的方差会随维度增长，导致softmax的梯度趋近于0。缩放因子$1/\sqrt{d_k}$保证了点积的方差稳定在1附近。
 
 如果使用其他初始化方案（如改变Q、K的初始化方差），是否可以避免显式缩放？这是一个值得探索的方向。一些研究表明，通过精心设计的初始化和归一化，可以实现"自然缩放"的效果。
 
 ### 1.1.3 注意力的计算复杂度
 
-标准注意力的计算复杂度为$$O(n^2d)$$，其中$$n$$是序列长度，$$d$$是隐藏维度。这个二次复杂度是长序列处理的主要瓶颈。
+标准注意力的计算复杂度为$O(n^2d)$，其中$n$是序列长度，$d$是隐藏维度。这个二次复杂度是长序列处理的主要瓶颈。
 
 #### 练习 1.1：证明注意力计算复杂度
-证明自注意力机制的时间复杂度为$$O(n^2d)$$，空间复杂度为$$O(n^2)$$。分析哪些操作是瓶颈。
+证明自注意力机制的时间复杂度为$O(n^2d)$，空间复杂度为$O(n^2)$。分析哪些操作是瓶颈。
 
-**提示**：分别考虑$$QK^T$$的计算（$$O(n^2d)$$）和$$\text{softmax}(\cdot)V$$的计算（$$O(n^2d)$$）。
+**提示**：分别考虑$QK^T$的计算（$O(n^2d)$）和$\text{softmax}(\cdot)V$的计算（$O(n^2d)$）。
 
 <details>
 <summary>查看答案</summary>
 
 **时间复杂度分析：**
 
-1. 计算$$QK^T$$：
-   - $$Q$$的形状：$$[n, d]$$
-   - $$K^T$$的形状：$$[d, n]$$
-   - 矩阵乘法：$$O(n \times d \times n) = O(n^2d)$$
+1. 计算$QK^T$：
+   - $Q$的形状：$[n, d]$
+   - $K^T$的形状：$[d, n]$
+   - 矩阵乘法：$O(n \times d \times n) = O(n^2d)$
 
 2. Softmax操作：
-   - 输入形状：$$[n, n]$$
-   - 每行计算softmax：$$O(n)$$
-   - 总共$$n$$行：$$O(n^2)$$
+   - 输入形状：$[n, n]$
+   - 每行计算softmax：$O(n)$
+   - 总共$n$行：$O(n^2)$
 
-3. 与$$V$$相乘：
-   - Softmax输出形状：$$[n, n]$$
-   - $$V$$的形状：$$[n, d]$$
-   - 矩阵乘法：$$O(n \times n \times d) = O(n^2d)$$
+3. 与$V$相乘：
+   - Softmax输出形状：$[n, n]$
+   - $V$的形状：$[n, d]$
+   - 矩阵乘法：$O(n \times n \times d) = O(n^2d)$
 
-总时间复杂度：$$O(n^2d) + O(n^2) + O(n^2d) = O(n^2d)$$
+总时间复杂度：$O(n^2d) + O(n^2) + O(n^2d) = O(n^2d)$
 
 **空间复杂度分析：**
-- 存储注意力矩阵$$QK^T$$：$$O(n^2)$$
+- 存储注意力矩阵$QK^T$：$O(n^2)$
 - 这是主要的空间瓶颈
 
 **瓶颈分析：**
-- 当$$n >> d$$时（如长文本），$$n^2$$项主导
-- 当$$d >> n$$时（如短序列但模型很宽），计算瓶颈在矩阵乘法的$$d$$维度
+- 当$n >> d$时（如长文本），$n^2$项主导
+- 当$d >> n$时（如短序列但模型很宽），计算瓶颈在矩阵乘法的$d$维度
 - 实践中通常n更容易成为瓶颈，因此有了各种稀疏注意力的研究
 
 </details>
@@ -135,7 +135,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 
 从信息论角度，注意力机制可以理解为一种信息瓶颈(Information Bottleneck)：
 
-- **信息压缩**：将$$n$$个$$d$$维向量压缩为1个$$d$$维向量
+- **信息压缩**：将$n$个$d$维向量压缩为1个$d$维向量
 - **相关性提取**：通过注意力权重保留最相关的信息
 - **条件独立性**：假设给定注意力权重后，输出与原始输入条件独立
 
@@ -199,7 +199,7 @@ Transformer中使用了两种注意力：
 
 ### 1.2.1 多头注意力的数学形式
 
-给定输入$$X \in \mathbb{R}^{n \times d_{model}}$$，多头注意力计算如下：
+给定输入$X \in \mathbb{R}^{n \times d_{model}}$，多头注意力计算如下：
 
 $$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h)W^O$$
 
@@ -207,15 +207,15 @@ $$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h)W^
 $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 
 参数维度：
-- $$W_i^Q, W_i^K \in \mathbb{R}^{d_{model} \times d_k}$$
-- $$W_i^V \in \mathbb{R}^{d_{model} \times d_v}$$
-- $$W^O \in \mathbb{R}^{hd_v \times d_{model}}$$
-- 通常设置$$d_k = d_v = d_{model}/h$$
+- $W_i^Q, W_i^K \in \mathbb{R}^{d_{model} \times d_k}$
+- $W_i^V \in \mathbb{R}^{d_{model} \times d_v}$
+- $W^O \in \mathbb{R}^{hd_v \times d_{model}}$
+- 通常设置$d_k = d_v = d_{model}/h$
 
 ### 1.2.2 为什么需要多头？
 
 **1. 表达能力**
-- 单头注意力的秩受限于$$d_k$$
+- 单头注意力的秩受限于$d_k$
 - 多头可以建模更复杂的依赖关系
 - 不同头可以专注于不同的语言现象（如语法、语义、位置等）
 
@@ -231,7 +231,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 
 **经验观察：**
 - 太少的头（如1-2个）限制表达能力
-- 太多的头（如64个）可能导致每个头的维度$$d_k$$太小
+- 太多的头（如64个）可能导致每个头的维度$d_k$太小
 - 存在收益递减：从8头到16头的提升通常大于从16头到32头
 
 **⚡ 设计选择：** 
@@ -248,7 +248,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 **实验设计：**
 
 1. **控制变量：**
-   - 保持$$d_{model}$$固定（如512）
+   - 保持$d_{model}$固定（如512）
    - 总参数量大致相等（调整层数）
    - 相同的训练数据和步数
 
@@ -262,7 +262,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
    - 1-2头：性能明显差，注意力模式单一
    - 4-8头：性能快速提升，效率仍然良好
    - 16头：接近最优，常见的默认选择
-   - 32+头：边际收益递减，$$d_k$$过小可能hurt性能
+   - 32+头：边际收益递减，$d_k$过小可能hurt性能
 
 4. **深入分析：**
    - 计算不同头的注意力模式相似度
@@ -285,17 +285,17 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 
 ### 1.2.5 参数共享与变体
 
-**1. 标准多头**: 每个头有独立的$$W^Q, W^K, W^V$$
+**1. 标准多头**: 每个头有独立的$W^Q, W^K, W^V$
 ```
 参数量: 3 × h × d_model × d_k
 ```
 
 **2. 共享参数变体：**
-- **Multi-Query Attention (MQA)**: 所有头共享$$K$$和$$V$$的投影
+- **Multi-Query Attention (MQA)**: 所有头共享$K$和$V$的投影
   - 参数量减少为原来的约1/3
   - 推理时KV cache大幅减少
   
-- **Grouped-Query Attention (GQA)**: 头分组共享$$K$$和$$V$$
+- **Grouped-Query Attention (GQA)**: 头分组共享$K$和$V$
   - 在MQA和标准MHA之间的折中
   - 更好的质量-效率权衡
 
@@ -311,17 +311,17 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 
 **详细比较：**
 
-假设：$$d_{model}=512$$, $$h=8$$, 序列长度$$n=1024$$, batch size$$=32$$
+假设：$d_{model}=512$, $h=8$, 序列长度$n=1024$, batch size$=32$
 
 1. **参数量：**
-   - MHA: $$3 \times 8 \times 512 \times 64 = 786K$$
-   - MQA: $$512 \times 64 + 2 \times 512 \times 512 = 557K$$ (减少29%)
-   - GQA(4组): $$4 \times 512 \times 64 + 2 \times 4 \times 512 \times 64 = 393K$$ (减少50%)
+   - MHA: $3 \times 8 \times 512 \times 64 = 786K$
+   - MQA: $512 \times 64 + 2 \times 512 \times 512 = 557K$ (减少29%)
+   - GQA(4组): $4 \times 512 \times 64 + 2 \times 4 \times 512 \times 64 = 393K$ (减少50%)
 
 2. **KV Cache大小（每层）：**
-   - MHA: $$2 \times 32 \times 8 \times 1024 \times 64 = 33.6M$$
-   - MQA: $$2 \times 32 \times 1 \times 1024 \times 512 = 33.6M$$ (相同总大小但结构不同)
-   - GQA: $$2 \times 32 \times 4 \times 1024 \times 128 = 33.6M$$
+   - MHA: $2 \times 32 \times 8 \times 1024 \times 64 = 33.6M$
+   - MQA: $2 \times 32 \times 1 \times 1024 \times 512 = 33.6M$ (相同总大小但结构不同)
+   - GQA: $2 \times 32 \times 4 \times 1024 \times 128 = 33.6M$
 
 3. **计算分析：**
    - MQA在生成阶段显著快于MHA
@@ -333,7 +333,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 ### 1.2.6 注意力的计算优化
 
 **Flash Attention思想预览：**
-- 标准实现需要材料化完整的$$n \times n$$注意力矩阵
+- 标准实现需要材料化完整的$n \times n$注意力矩阵
 - Flash Attention通过分块计算避免这一点
 - 将在第8章详细讨论
 
@@ -356,7 +356,7 @@ Transformer架构本身是置换不变的(permutation invariant)——打乱输�
 - 词序对语义至关重要
 
 **数学原理：**
-自注意力计算$$\text{softmax}(QK^T/\sqrt{d_k})$$只依赖于向量间的点积，与位置无关。
+自注意力计算$\text{softmax}(QK^T/\sqrt{d_k})$只依赖于向量间的点积，与位置无关。
 
 ### 1.3.2 绝对位置编码：正弦编码
 
@@ -365,16 +365,16 @@ Transformer架构本身是置换不变的(permutation invariant)——打乱输�
 $$PE_{(pos,2i)} = \sin(pos/10000^{2i/d_{model}})$$
 $$PE_{(pos,2i+1)} = \cos(pos/10000^{2i/d_{model}})$$
 
-其中$$pos$$是位置，$$i$$是维度索引。
+其中$pos$是位置，$i$是维度索引。
 
 **设计原理：**
 1. **连续性**: 相邻位置的编码相似
 2. **唯一性**: 每个位置有唯一编码
 3. **外推性**: 可以处理训练时未见过的长度
-4. **相对位置**: $$PE_{pos+k}$$可以表示为$$PE_{pos}$$的线性函数
+4. **相对位置**: $PE_{pos+k}$可以表示为$PE_{pos}$的线性函数
 
 #### 练习 1.6：证明正弦编码的相对位置性质
-证明对于固定的偏移$$k$$，存在线性变换$$T_k$$使得$$PE_{pos+k} = T_k \cdot PE_{pos}$$。
+证明对于固定的偏移$k$，存在线性变换$T_k$使得$PE_{pos+k} = T_k \cdot PE_{pos}$。
 
 <details>
 <summary>查看答案</summary>
@@ -382,21 +382,21 @@ $$PE_{(pos,2i+1)} = \cos(pos/10000^{2i/d_{model}})$$
 **证明：**
 
 使用三角恒等式：
-- $$\sin(a+b) = \sin(a)\cos(b) + \cos(a)\sin(b)$$
-- $$\cos(a+b) = \cos(a)\cos(b) - \sin(a)\sin(b)$$
+- $\sin(a+b) = \sin(a)\cos(b) + \cos(a)\sin(b)$
+- $\cos(a+b) = \cos(a)\cos(b) - \sin(a)\sin(b)$
 
-对于维度对$$(2i, 2i+1)$$：
+对于维度对$(2i, 2i+1)$：
 ```
 PE_{(pos+k,2i)} = sin((pos+k)/λ) = sin(pos/λ)cos(k/λ) + cos(pos/λ)sin(k/λ)
 PE_{(pos+k,2i+1)} = cos((pos+k)/λ) = cos(pos/λ)cos(k/λ) - sin(pos/λ)sin(k/λ)
 ```
 
-其中$$\lambda = 10000^{2i/d_{model}}$$。
+其中$\lambda = 10000^{2i/d_{model}}$。
 
 可以写成矩阵形式：
 $$\begin{bmatrix} PE_{(pos+k,2i)} \\ PE_{(pos+k,2i+1)} \end{bmatrix} = \begin{bmatrix} \cos(k/\lambda) & \sin(k/\lambda) \\ -\sin(k/\lambda) & \cos(k/\lambda) \end{bmatrix} \begin{bmatrix} PE_{(pos,2i)} \\ PE_{(pos,2i+1)} \end{bmatrix}$$
 
-这是一个旋转矩阵！每个维度对独立旋转，旋转角度取决于$$k$$和频率。
+这是一个旋转矩阵！每个维度对独立旋转，旋转角度取决于$k$和频率。
 
 </details>
 
@@ -411,7 +411,7 @@ $$\begin{bmatrix} PE_{(pos+k,2i)} \\ PE_{(pos+k,2i+1)} \end{bmatrix} = \begin{bm
 
 **劣势：**
 - 长度限制：只能处理训练时见过的最大长度
-- 参数开销：需要$$\text{max\_position} \times d_{model}$$个参数
+- 参数开销：需要$\text{max\_position} \times d_{model}$个参数
 - 泛化性：对未见过的位置泛化差
 
 **🔬 研究线索：** 如何让学习的位置嵌入具有更好的长度外推能力？一些方法包括：位置插值、ALiBi（后面会讲）、相对位置编码等。
@@ -424,12 +424,12 @@ $$\begin{bmatrix} PE_{(pos+k,2i)} \\ PE_{(pos+k,2i+1)} \end{bmatrix} = \begin{bm
 修改注意力计算：
 $$\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}} + B\right)V$$
 
-其中$$B_{ij} = b_{i-j}$$是基于相对位置$$i-j$$的可学习偏置。
+其中$B_{ij} = b_{i-j}$是基于相对位置$i-j$的可学习偏置。
 
 **优势：**
 - 天然的长度泛化
-- 参数效率：只需要$$2 \times \text{max\_relative\_position} - 1$$个参数
-- 对称性：$$b_{k} = b_{-k}$$可以强制实现
+- 参数效率：只需要$2 \times \text{max\_relative\_position} - 1$个参数
+- 对称性：$b_{k} = b_{-k}$可以强制实现
 
 #### 练习 1.7：设计位置编码实验
 设计实验比较不同位置编码在以下任务上的表现：
@@ -491,7 +491,7 @@ RoPE已成为许多现代LLM的默认选择（如LLaMA），因为它结合了�
 
 **1. ALiBi (Attention with Linear Biases):**
 - 直接在注意力分数上加线性偏置
-- $$\text{bias}_{ij} = -|i-j| \cdot \text{slope}$$
+- $\text{bias}_{ij} = -|i-j| \cdot \text{slope}$
 - 极其简单但效果良好
 
 **2. 无位置编码:**
@@ -558,9 +558,9 @@ Transformer块中的前馈网络(FFN)看似简单，实则扮演着关键角色�
 $$\text{FFN}(x) = \text{Act}(xW_1 + b_1)W_2 + b_2$$
 
 其中：
-- $$W_1 \in \mathbb{R}^{d_{model} \times d_{ff}}$$
-- $$W_2 \in \mathbb{R}^{d_{ff} \times d_{model}}$$
-- 通常$$d_{ff} = 4 \times d_{model}$$
+- $W_1 \in \mathbb{R}^{d_{model} \times d_{ff}}$
+- $W_2 \in \mathbb{R}^{d_{ff} \times d_{model}}$
+- 通常$d_{ff} = 4 \times d_{model}$
 
 ### 1.4.2 为什么需要FFN？
 
@@ -570,13 +570,13 @@ $$\text{FFN}(x) = \text{Act}(xW_1 + b_1)W_2 + b_2$$
 - 增强模型的表达能力
 
 **2. 特征扩展与压缩**
-- 扩展到高维空间（$$d_{ff} > d_{model}$$）
+- 扩展到高维空间（$d_{ff} > d_{model}$）
 - 在高维空间进行复杂计算
 - 压缩回原始维度
 
 **3. 记忆存储假说**
 研究表明，FFN可能存储了大量的"事实知识"：
-- 键值记忆：$$W_1$$的行作为键，$$W_2$$的列作为值
+- 键值记忆：$W_1$的行作为键，$W_2$的列作为值
 - 模式匹配：激活函数决定哪些"记忆"被检索
 
 **🔬 研究线索：** FFN真的是记忆存储吗？一些证据：
@@ -603,7 +603,7 @@ $$\text{ReLU}(x) = \max(0, x)$$
 BERT推广了GELU：
 $$\text{GELU}(x) = x \cdot \Phi(x) \approx 0.5x(1 + \tanh(\sqrt{2/\pi}(x + 0.044715x^3)))$$
 
-其中$$\Phi(x)$$是标准正态分布的CDF。
+其中$\Phi(x)$是标准正态分布的CDF。
 
 优点：
 - 平滑可微
@@ -639,7 +639,7 @@ $$\text{SiLU}(x) = x \cdot \sigma(x) = \frac{x}{1 + e^{-x}}$$
 2. **导数分析：**
    - ReLU: 导数是阶跃函数（0或1）
    - GELU: 导数平滑，避免梯度突变
-   - SiLU: $$\text{SiLU}'(x) = \text{SiLU}(x) + \sigma(x)(1-\text{SiLU}(x))$$
+   - SiLU: $\text{SiLU}'(x) = \text{SiLU}(x) + \sigma(x)(1-\text{SiLU}(x))$
 
 3. **计算效率（相对）：**
    - ReLU: 1x（基准）
@@ -672,15 +672,15 @@ $$\text{GeGLU}(x) = (xW_1 + b_1) \otimes \text{GELU}(xW_g + b_g)$$
 - 实践中性能优于标准FFN
 
 **⚡ 设计选择：** 
-使用GLU变体需要更多参数（额外的$$W_g$$），但通常值得：
-- 保持相同参数量：减少$$d_{ff}$$
-- 保持相同$$d_{ff}$$：接受参数增加
+使用GLU变体需要更多参数（额外的$W_g$），但通常值得：
+- 保持相同参数量：减少$d_{ff}$
+- 保持相同$d_{ff}$：接受参数增加
 - 实践中两种都有采用
 
 ### 1.4.5 FFN的设计选择
 
 **1. 扩展比例**
-- 标准：$$d_{ff} = 4 \times d_{model}$$
+- 标准：$d_{ff} = 4 \times d_{model}$
 - 趋势：更大的模型用更小的比例（如2.5x）
 - 权衡：容量vs效率
 
@@ -738,7 +738,7 @@ $$\text{GeGLU}(x) = (xW_1 + b_1) \otimes \text{GELU}(xW_g + b_g)$$
 - 有时需要更小的初始化防止训练不稳定
 
 **2. 正则化**
-- Dropout：通常只在$$W_2$$之前
+- Dropout：通常只在$W_2$之前
 - 权重衰减：FFN占参数量大，正则化重要
 - 激活值裁剪：防止数值不稳定
 
@@ -748,7 +748,7 @@ $$\text{GeGLU}(x) = (xW_1 + b_1) \otimes \text{GELU}(xW_g + b_g)$$
 - int8/fp8量化（推理时）
 
 **🔬 研究线索：** 
-- 自适应FFN：根据输入动态调整$$d_{ff}$$
+- 自适应FFN：根据输入动态调整$d_{ff}$
 - 条件计算：不同类型的输入使用不同的FFN路径
 - 持续学习：如何在不遗忘的情况下更新FFN中的"知识"？
 
@@ -780,16 +780,16 @@ $$\text{GeGLU}(x) = (xW_1 + b_1) \otimes \text{GELU}(xW_g + b_g)$$
 残差连接的基本形式：
 $$y = x + F(x)$$
 
-其中$$F(x)$$是某个子层（如注意力或FFN）。
+其中$F(x)$是某个子层（如注意力或FFN）。
 
 **为什么需要残差连接？**
 
 1. **梯度直通路径**
-   - 反向传播时：$$\frac{\partial L}{\partial x} = \frac{\partial L}{\partial y}(1 + \frac{\partial F}{\partial x})$$
-   - 即使$$\frac{\partial F}{\partial x}$$很小，梯度仍可通过"+1"项传递
+   - 反向传播时：$\frac{\partial L}{\partial x} = \frac{\partial L}{\partial y}(1 + \frac{\partial F}{\partial x})$
+   - 即使$\frac{\partial F}{\partial x}$很小，梯度仍可通过"+1"项传递
 
 2. **恒等映射的简化**
-   - 网络可以轻易学习恒等映射（让$$F(x) \approx 0$$）
+   - 网络可以轻易学习恒等映射（让$F(x) \approx 0$）
    - 降低了优化难度
 
 3. **特征重用**
@@ -797,7 +797,7 @@ $$y = x + F(x)$$
    - 不同层次的特征自然融合
 
 **🔬 研究线索：** 残差连接是否总是最优的？一些变体：
-- 加权残差：$$y = \alpha x + (1-\alpha)F(x)$$
+- 加权残差：$y = \alpha x + (1-\alpha)F(x)$
 - 密集连接：连接到所有之前的层
 - 随机深度：训练时随机跳过某些层
 
@@ -808,9 +808,9 @@ $$y = x + F(x)$$
 $$\text{LN}(x) = \gamma \frac{x - \mu}{\sigma + \epsilon} + \beta$$
 
 其中：
-- $$\mu = \frac{1}{d}\sum_{i=1}^{d} x_i$$ （均值）
-- $$\sigma = \sqrt{\frac{1}{d}\sum_{i=1}^{d} (x_i - \mu)^2}$$ （标准差）
-- $$\gamma, \beta$$ 是可学习的缩放和偏移参数
+- $\mu = \frac{1}{d}\sum_{i=1}^{d} x_i$ （均值）
+- $\sigma = \sqrt{\frac{1}{d}\sum_{i=1}^{d} (x_i - \mu)^2}$ （标准差）
+- $\gamma, \beta$ 是可学习的缩放和偏移参数
 
 **与批归一化(Batch Normalization)的区别：**
 - BN：跨批次维度归一化，依赖批次统计
@@ -870,13 +870,13 @@ $$\text{Output} = x + \text{Sublayer}(\text{LN}(x))$$
 - 在注意力的Q、K、V投影后
 
 **2. 无参数层归一化**
-- 移除可学习的$$\gamma$$和$$\beta$$
+- 移除可学习的$\gamma$和$\beta$
 - 简化但可能限制表达能力
 - 某些场景下性能相当
 
 **3. RMSNorm（Root Mean Square Normalization）**
 $$\text{RMSNorm}(x) = \frac{x}{\text{RMS}(x)} \cdot \gamma$$
-其中$$\text{RMS}(x) = \sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2}$$
+其中$\text{RMS}(x) = \sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2}$
 
 优点：
 - 计算更简单（无需计算均值）
@@ -898,8 +898,8 @@ $$\text{RMSNorm}(x) = \frac{x}{\text{RMS}(x)} \cdot \gamma$$
 - 反向传播：梯度爆炸或消失
 
 **2. 深度缩放（GPT-2引入）**
-- 在残差连接前乘以$$1/\sqrt{N}$$
-- $$N$$是残差层的数量
+- 在残差连接前乘以$1/\sqrt{N}$
+- $N$是残差层的数量
 - 防止残差累积过大
 
 **3. 子层输出缩放**
@@ -997,11 +997,11 @@ $$\text{RMSNorm}(x) = \frac{x}{\text{RMS}(x)} \cdot \gamma$$
 
 ### 1.6.1 效率优化：稀疏注意力
 
-标准注意力的$$O(n^2)$$复杂度限制了长序列处理。稀疏注意力通过限制注意力范围来降低复杂度。
+标准注意力的$O(n^2)$复杂度限制了长序列处理。稀疏注意力通过限制注意力范围来降低复杂度。
 
 **1. Sparse Transformer**
 - 固定稀疏模式：局部注意力 + 跨步注意力
-- 复杂度降至$$O(n\sqrt{n})$$
+- 复杂度降至$O(n\sqrt{n})$
 - 可处理更长序列但可能损失全局信息
 
 **2. Longformer**
@@ -1017,7 +1017,7 @@ $$\text{RMSNorm}(x) = \frac{x}{\text{RMS}(x)} \cdot \gamma$$
 **4. Reformer**
 - LSH（局部敏感哈希）注意力
 - 将相似的查询/键聚类
-- $$O(n\log n)$$复杂度
+- $O(n\log n)$复杂度
 
 #### 练习 1.13：设计稀疏注意力模式
 为以下任务设计合适的稀疏注意力模式：
@@ -1076,7 +1076,7 @@ $$\text{RMSNorm}(x) = \frac{x}{\text{RMS}(x)} \cdot \gamma$$
 
 **1. Linformer**
 - 低秩分解注意力矩阵
-- 线性复杂度$$O(n)$$
+- 线性复杂度$O(n)$
 - 适合固定长度场景
 
 **2. Performer**
