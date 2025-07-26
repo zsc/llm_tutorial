@@ -26,10 +26,10 @@ Pointer Networks首次提出了使用注意力机制来"指向"输入序列中�
 
 $$p(C_i|C_1,...,C_{i-1}, \mathcal{P}) = \text{softmax}(u_i^T)$$
 
-这里$C_i$表示输出序列的第$i$个元素（指向输入序列的某个位置），$\mathcal{P}$是输入序列。
+这里 $C_i$ 表示输出序列的第 $i$ 个元素（指向输入序列的某个位置）， $\mathcal{P}$ 是输入序列。
 
-其中$u_i^j = v^T \tanh(W_1 e_j + W_2 d_i)$计算解码器状态$d_i$对编码器状态$e_j$的注意力得分。原始论文还探索了几种变体：
-- **简化版本**：直接使用$u_i^j = e_j^T W d_i$，去掉了非线性激活
+其中 $u_i^j = v^T \tanh(W_1 e_j + W_2 d_i)$ 计算解码器状态 $d_i$ 对编码器状态 $e_j$ 的注意力得分。原始论文还探索了几种变体：
+- **简化版本**：直接使用 $u_i^j = e_j^T W d_i$ ，去掉了非线性激活
 - **多层感知机版本**：使用更深的网络计算注意力分数
 - **归一化变体**：在计算注意力前对向量进行L2归一化
 
@@ -38,7 +38,7 @@ $$p(C_i|C_1,...,C_{i-1}, \mathcal{P}) = \text{softmax}(u_i^T)$$
 **2. Neural Turing Machines (2014)**
 NTM引入了基于内容的寻址机制，通过计算控制器状态与内存内容的相似度来读写外部记忆。
 
-读取操作通过注意力权重$w_t^r$从记忆$M_t$中读取：
+读取操作通过注意力权重 $w_t^r$ 从记忆 $M_t$ 中读取：
 $$r_t = \sum_i w_t^r(i) M_t(i)$$
 
 写入操作包括擦除和添加两步：
@@ -47,13 +47,13 @@ $$M_t(i) = M_{t-1}(i)[1 - w_t^w(i)e_t] + w_t^w(i)a_t$$
 其中注意力权重通过基于内容的寻址计算：
 $$w_t(i) = \frac{\exp(\beta_t K[k_t, M_t(i)])}{\sum_j \exp(\beta_t K[k_t, M_t(j)])}$$
 
-这里$K$是相似度函数（如余弦相似度），$k_t$是查询向量，$e_t$是擦除向量，$a_t$是添加向量。
+这里 $K$ 是相似度函数（如余弦相似度）， $k_t$ 是查询向量， $e_t$ 是擦除向量， $a_t$ 是添加向量。
 
 NTM实际上结合了多种寻址机制：
 - **基于内容的寻址**：上述的相似度匹配
 - **基于位置的寻址**：包括旋转（rotation）和锐化（sharpening）操作
-- **插值门控**：$w_t = g_t w_t^c + (1-g_t)w_{t-1}$，在内容寻址和前一时刻权重间插值
-- **卷积移位**：允许相对位置的移动，$\tilde{w}_t(i) = \sum_j w_t(j)s_t(i-j)$
+- **插值门控**： $w_t = g_t w_t^c + (1-g_t)w_{t-1}$ ，在内容寻址和前一时刻权重间插值
+- **卷积移位**：允许相对位置的移动， $\tilde{w}_t(i) = \sum_j w_t(j)s_t(i-j)$
 
 这种混合寻址机制使NTM既能基于内容检索，又能进行顺序访问，为后续的注意力机制设计提供了丰富的思路。
 
@@ -67,22 +67,22 @@ $$e_{ij} = v^T \tanh(W_a s_{i-1} + U_a h_j)$$
 $$\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k=1}^{n} \exp(e_{ik})}$$
 
 **Luong注意力（2015）**提出了三种变体：
-- **点积**：$\text{score}(h_t, \bar{h}_s) = h_t^T \bar{h}_s$
-- **一般形式**：$\text{score}(h_t, \bar{h}_s) = h_t^T W_a \bar{h}_s$
-- **拼接形式**：$\text{score}(h_t, \bar{h}_s) = v_a^T \tanh(W_a[h_t; \bar{h}_s])$
+- **点积**： $\text{score}(h_t, \bar{h}_s) = h_t^T \bar{h}_s$
+- **一般形式**： $\text{score}(h_t, \bar{h}_s) = h_t^T W_a \bar{h}_s$
+- **拼接形式**： $\text{score}(h_t, \bar{h}_s) = v_a^T \tanh(W_a[h_t; \bar{h}_s])$
 
 Luong注意力的关键创新在于：
-1. 使用当前时刻的隐状态$h_t$而非前一时刻$h_{t-1}$
+1. 使用当前时刻的隐状态 $h_t$ 而非前一时刻 $h_{t-1}$
 2. 提出了更简洁的点积形式，这直接启发了Transformer的设计
 3. 区分了"全局"和"局部"注意力的概念
 
 ### 1.1.2 从加权平均到注意力
 
-注意力机制的本质是一种动态的加权平均。给定一个查询(query) $q$和一组键值对(key-value pairs) $\{(k_1,v_1), (k_2,v_2), ..., (k_n,v_n)\}$，注意力机制计算：
+注意力机制的本质是一种动态的加权平均。给定一个查询(query) $q$ 和一组键值对(key-value pairs) $\{(k_1,v_1), (k_2,v_2), ..., (k_n,v_n)\}$ ，注意力机制计算：
 
 $$\text{Attention}(q, K, V) = \sum_i \alpha(q, k_i) \cdot v_i$$
 
-其中 $\alpha(q, k_i)$ 是注意力权重，满足$\sum_i \alpha(q, k_i) = 1$。
+其中 $\alpha(q, k_i)$ 是注意力权重，满足 $\sum_i \alpha(q, k_i) = 1$ 。
 
 ### 1.1.3 缩放点积注意力
 
@@ -98,7 +98,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 - 可学习性：通过学习Q、K的表示空间来调整相似度计算
 
 替代方案：
-- 加性注意力（Bahdanau注意力）：$e_{ij} = v^T \tanh(W_q q_i + W_k k_j)$，然后$\alpha_{ij} = \text{softmax}(e_{ij})$
+- 加性注意力（Bahdanau注意力）： $e_{ij} = v^T \tanh(W_q q_i + W_k k_j)$ ，然后 $\alpha_{ij} = \text{softmax}(e_{ij})$
 - 乘性注意力的其他形式：如使用其他核函数
 - 学习的相似度函数：通过神经网络计算相似度
 
@@ -106,7 +106,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 
 **2. 为什么要缩放？**
 
-当$d_k$较大时，点积的方差会随维度增长，导致softmax的梯度趋近于0。缩放因子$1/\sqrt{d_k}$保证了点积的方差稳定在1附近。
+当 $d_k$ 较大时，点积的方差会随维度增长，导致softmax的梯度趋近于0。缩放因子 $1/\sqrt{d_k}$ 保证了点积的方差稳定在1附近。
 
 如果使用其他初始化方案（如改变Q、K的初始化方差），是否可以避免显式缩放？这是一个值得探索的方向。一些研究表明，通过精心设计的初始化和归一化，可以实现"自然缩放"的效果。
 
@@ -123,52 +123,52 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 | **Luong一般注意力** | $\alpha_{ts} = \text{softmax}(h_t^T W_a \bar{h}_s)$ | 带参数的点积 | $O(n^2d)$ |
 | **缩放点积注意力** | $\alpha_{ij} = \text{softmax}(\frac{q_i^T k_j}{\sqrt{d_k}})$ | 带缩放的点积，稳定训练 | $O(n^2d)$ |
 
-其中$n$是序列长度，$d$是隐藏维度，$d'$是注意力隐藏层维度，$M$是记忆槽数量。
+其中 $n$ 是序列长度， $d$ 是隐藏维度， $d'$ 是注意力隐藏层维度， $M$ 是记忆槽数量。
 
 **关键洞察**：
-1. **从加性到乘性**：早期工作（Pointer Networks、Bahdanau）多用加性注意力，需要额外参数$v$；Luong首次提出无参数的点积形式
+1. **从加性到乘性**：早期工作（Pointer Networks、Bahdanau）多用加性注意力，需要额外参数 $v$ ；Luong首次提出无参数的点积形式
 2. **从特定任务到通用机制**：Pointer Networks用于组合优化，NTM用于记忆读写，Seq2Seq注意力用于翻译对齐，而Transformer的注意力更加通用
-3. **缩放的重要性**：Transformer在Luong点积基础上加入$\sqrt{d_k}$缩放，解决了高维度下的梯度消失问题
-4. **计算效率演进**：虽然都是$O(n^2)$复杂度，但点积形式可以充分利用现代硬件的矩阵运算优化
+3. **缩放的重要性**：Transformer在Luong点积基础上加入 $\sqrt{d_k}$ 缩放，解决了高维度下的梯度消失问题
+4. **计算效率演进**：虽然都是 $O(n^2)$ 复杂度，但点积形式可以充分利用现代硬件的矩阵运算优化
 
 ### 1.1.5 注意力的计算复杂度
 
-标准注意力的计算复杂度为$O(n^2d)$，其中$n$是序列长度，$d$是隐藏维度。这个二次复杂度是长序列处理的主要瓶颈。
+标准注意力的计算复杂度为 $O(n^2d)$ ，其中 $n$ 是序列长度， $d$ 是隐藏维度。这个二次复杂度是长序列处理的主要瓶颈。
 
 #### 练习 1.1：证明注意力计算复杂度
-证明自注意力机制的时间复杂度为$O(n^2d)$，空间复杂度为$O(n^2)$。分析哪些操作是瓶颈。
+证明自注意力机制的时间复杂度为 $O(n^2d)$ ，空间复杂度为 $O(n^2)$ 。分析哪些操作是瓶颈。
 
-**提示**：分别考虑$QK^T$的计算（$O(n^2d)$）和$\text{softmax}(\cdot)V$的计算（$O(n^2d)$）。
+**提示**：分别考虑 $QK^T$ 的计算（ $O(n^2d)$ ）和 $\text{softmax}(\cdot)V$ 的计算（ $O(n^2d)$ ）。
 
 <details>
 <summary>查看答案</summary>
 
 **时间复杂度分析：**
 
-1. 计算$QK^T$：
-   - $Q$的形状：$[n, d]$
-   - $K^T$的形状：$[d, n]$
-   - 矩阵乘法：$O(n \times d \times n) = O(n^2d)$
+1. 计算 $QK^T$ ：
+   - $Q$ 的形状： $[n, d]$
+   - $K^T$ 的形状： $[d, n]$
+   - 矩阵乘法： $O(n \times d \times n) = O(n^2d)$
 
 2. Softmax操作：
-   - 输入形状：$[n, n]$
-   - 每行计算softmax：$O(n)$
-   - 总共$n$行：$O(n^2)$
+   - 输入形状： $[n, n]$
+   - 每行计算softmax： $O(n)$
+   - 总共 $n$ 行： $O(n^2)$
 
-3. 与$V$相乘：
-   - Softmax输出形状：$[n, n]$
-   - $V$的形状：$[n, d]$
-   - 矩阵乘法：$O(n \times n \times d) = O(n^2d)$
+3. 与 $V$ 相乘：
+   - Softmax输出形状： $[n, n]$
+   - $V$ 的形状： $[n, d]$
+   - 矩阵乘法： $O(n \times n \times d) = O(n^2d)$
 
-总时间复杂度：$O(n^2d) + O(n^2) + O(n^2d) = O(n^2d)$
+总时间复杂度： $O(n^2d) + O(n^2) + O(n^2d) = O(n^2d)$
 
 **空间复杂度分析：**
-- 存储注意力矩阵$QK^T$：$O(n^2)$
+- 存储注意力矩阵 $QK^T$ ： $O(n^2)$
 - 这是主要的空间瓶颈
 
 **瓶颈分析：**
-- 当$n >> d$时（如长文本），$n^2$项主导
-- 当$d >> n$时（如短序列但模型很宽），计算瓶颈在矩阵乘法的$d$维度
+- 当 $n >> d$ 时（如长文本）， $n^2$ 项主导
+- 当 $d >> n$ 时（如短序列但模型很宽），计算瓶颈在矩阵乘法的 $d$ 维度
 - 实践中通常n更容易成为瓶颈，因此有了各种稀疏注意力的研究
 
 </details>
@@ -215,7 +215,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)
 
 从信息论角度，注意力机制可以理解为一种信息瓶颈(Information Bottleneck)：
 
-- **信息压缩**：将$n$个$d$维向量压缩为1个$d$维向量
+- **信息压缩**：将 $n$ 个 $d$ 维向量压缩为1个 $d$ 维向量
 - **相关性提取**：通过注意力权重保留最相关的信息
 - **条件独立性**：假设给定注意力权重后，输出与原始输入条件独立
 
@@ -279,7 +279,7 @@ Transformer中使用了两种注意力：
 
 ### 1.2.1 多头注意力的数学形式
 
-给定输入$X \in \mathbb{R}^{n \times d_{model}}$，多头注意力计算如下：
+给定输入 $X \in \mathbb{R}^{n \times d_{model}}$ ，多头注意力计算如下：
 
 $$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h)W^O$$
 
@@ -290,12 +290,12 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 - $W_i^Q, W_i^K \in \mathbb{R}^{d_{model} \times d_k}$
 - $W_i^V \in \mathbb{R}^{d_{model} \times d_v}$
 - $W^O \in \mathbb{R}^{hd_v \times d_{model}}$
-- 通常设置$d_k = d_v = d_{model}/h$
+- 通常设置 $d_k = d_v = d_{model}/h$
 
 ### 1.2.2 为什么需要多头？
 
 **1. 表达能力**
-- 单头注意力的秩受限于$d_k$
+- 单头注意力的秩受限于 $d_k$
 - 多头可以建模更复杂的依赖关系
 - 不同头可以专注于不同的语言现象（如语法、语义、位置等）
 
@@ -311,7 +311,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 
 **经验观察：**
 - 太少的头（如1-2个）限制表达能力
-- 太多的头（如64个）可能导致每个头的维度$d_k$太小
+- 太多的头（如64个）可能导致每个头的维度 $d_k$ 太小
 - 存在收益递减：从8头到16头的提升通常大于从16头到32头
 
 **⚡ 设计选择：** 
@@ -328,7 +328,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 **实验设计：**
 
 1. **控制变量：**
-   - 保持$d_{model}$固定（如512）
+   - 保持 $d_{model}$ 固定（如512）
    - 总参数量大致相等（调整层数）
    - 相同的训练数据和步数
 
@@ -342,7 +342,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
    - 1-2头：性能明显差，注意力模式单一
    - 4-8头：性能快速提升，效率仍然良好
    - 16头：接近最优，常见的默认选择
-   - 32+头：边际收益递减，$d_k$过小可能hurt性能
+   - 32+头：边际收益递减， $d_k$ 过小可能hurt性能
 
 4. **深入分析：**
    - 计算不同头的注意力模式相似度
@@ -402,17 +402,17 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 
 ### 1.2.5 参数共享与变体
 
-**1. 标准多头**: 每个头有独立的$W^Q, W^K, W^V$
+**1. 标准多头**: 每个头有独立的 $W^Q, W^K, W^V$
 ```
 参数量: 3 × h × d_model × d_k
 ```
 
 **2. 共享参数变体：**
-- **Multi-Query Attention (MQA)**: 所有头共享$K$和$V$的投影
-  - 参数量从$3hd_{model}d_k$减少到$hd_{model}d_k + 2d_{model}^2$，约为原来的2/3
-  - 推理时KV cache从$2bhnd_k$减少到$2bnd_k$，减少了$h$倍
+- **Multi-Query Attention (MQA)**: 所有头共享 $K$ 和 $V$ 的投影
+  - 参数量从 $3hd_{model}d_k$ 减少到 $hd_{model}d_k + 2d_{model}^2$ ，约为原来的2/3
+  - 推理时KV cache从 $2bhnd_k$ 减少到 $2bnd_k$ ，减少了 $h$ 倍
   
-- **Grouped-Query Attention (GQA)**: 头分组共享$K$和$V$
+- **Grouped-Query Attention (GQA)**: 头分组共享 $K$ 和 $V$
   - 在MQA和标准MHA之间的折中
   - 更好的质量-效率权衡
 
@@ -428,7 +428,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 
 **详细比较：**
 
-假设：$d_{model}=512$, $h=8$, 序列长度$n=1024$, batch size$=32$
+假设： $d_{model}=512$ , $h=8$ , 序列长度 $n=1024$ , batch size $=32$
 
 | 指标 | MHA | MQA | GQA(4组) |
 |------|-----|-----|----------|
@@ -441,7 +441,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 
 **计算复杂度对比：**
 
-尽管参数共享方式不同，MHA、MQA和GQA的计算复杂度相同，都是$O(bnd_{model}^2 + bn^2d_k h)$，差异主要体现在内存访问模式和缓存效率上。
+尽管参数共享方式不同，MHA、MQA和GQA的计算复杂度相同，都是 $O(bnd_{model}^2 + bn^2d_k h)$ ，差异主要体现在内存访问模式和缓存效率上。
 
 **实际应用观察：**
 1. **MQA在生成阶段显著快于MHA**：KV cache读取成本降低8倍
@@ -453,7 +453,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 ### 1.2.6 注意力的计算优化
 
 **Flash Attention思想预览：**
-- 标准实现需要材料化完整的$n \times n$注意力矩阵
+- 标准实现需要材料化完整的 $n \times n$ 注意力矩阵
 - Flash Attention通过分块计算避免这一点
 - 将在第8章详细讨论
 
@@ -476,7 +476,7 @@ Transformer架构本身是置换不变的(permutation invariant)——打乱输�
 - 词序对语义至关重要
 
 **数学原理：**
-自注意力计算$\text{softmax}(QK^T/\sqrt{d_k})$只依赖于向量间的点积，与位置无关。
+自注意力计算 $\text{softmax}(QK^T/\sqrt{d_k})$ 只依赖于向量间的点积，与位置无关。
 
 ### 1.3.2 绝对位置编码：正弦编码
 
@@ -485,16 +485,16 @@ Transformer架构本身是置换不变的(permutation invariant)——打乱输�
 $$PE_{(pos,2i)} = \sin(pos/10000^{2i/d_{model}})$$
 $$PE_{(pos,2i+1)} = \cos(pos/10000^{2i/d_{model}})$$
 
-其中$pos$是位置，$i$是维度索引。
+其中 $pos$ 是位置， $i$ 是维度索引。
 
 **设计原理：**
 1. **连续性**: 相邻位置的编码相似
 2. **唯一性**: 每个位置有唯一编码
 3. **外推性**: 可以处理训练时未见过的长度
-4. **相对位置**: $PE_{pos+k}$可以表示为$PE_{pos}$的线性函数
+4. **相对位置**: $PE_{pos+k}$ 可以表示为 $PE_{pos}$ 的线性函数
 
 #### 练习 1.6：证明正弦编码的相对位置性质
-证明对于固定的偏移$k$，存在线性变换$T_k$使得$PE_{pos+k} = T_k \cdot PE_{pos}$。
+证明对于固定的偏移 $k$ ，存在线性变换 $T_k$ 使得 $PE_{pos+k} = T_k \cdot PE_{pos}$ 。
 
 <details>
 <summary>查看答案</summary>
@@ -505,7 +505,7 @@ $$PE_{(pos,2i+1)} = \cos(pos/10000^{2i/d_{model}})$$
 - $\sin(a+b) = \sin(a)\cos(b) + \cos(a)\sin(b)$
 - $\cos(a+b) = \cos(a)\cos(b) - \sin(a)\sin(b)$
 
-对于维度对$(2i, 2i+1)$：
+对于维度对 $(2i, 2i+1)$ ：
 $$
 PE_{(pos+k,2i)} = sin((pos+k)/λ) = sin(pos/λ)cos(k/λ) + cos(pos/λ)sin(k/λ)
 $$
@@ -513,12 +513,12 @@ $$
 PE_{(pos+k,2i+1)} = cos((pos+k)/λ) = cos(pos/λ)cos(k/λ) - sin(pos/λ)sin(k/λ)
 $$
 
-其中$\lambda = 10000^{2i/d_{model}}$。
+其中 $\lambda = 10000^{2i/d_{model}}$ 。
 
 可以写成矩阵形式：
 $$\begin{bmatrix} PE_{(pos+k,2i)} \\ PE_{(pos+k,2i+1)} \end{bmatrix} = \begin{bmatrix} \cos(k/\lambda) & \sin(k/\lambda) \\ -\sin(k/\lambda) & \cos(k/\lambda) \end{bmatrix} \begin{bmatrix} PE_{(pos,2i)} \\ PE_{(pos,2i+1)} \end{bmatrix}$$
 
-这是一个旋转矩阵！每个维度对独立旋转，旋转角度取决于$k$和频率。
+这是一个旋转矩阵！每个维度对独立旋转，旋转角度取决于 $k$ 和频率。
 
 </details>
 
@@ -533,7 +533,7 @@ $$\begin{bmatrix} PE_{(pos+k,2i)} \\ PE_{(pos+k,2i+1)} \end{bmatrix} = \begin{bm
 
 **劣势：**
 - 长度限制：只能处理训练时见过的最大长度
-- 参数开销：需要$\text{max\_position} \times d_{model}$个参数
+- 参数开销：需要 $\text{max\_position} \times d_{model}$ 个参数
 - 泛化性：对未见过的位置泛化差
 
 **🔬 研究线索：** 如何让学习的位置嵌入具有更好的长度外推能力？一些方法包括：位置插值、ALiBi（后面会讲）、相对位置编码等。
@@ -546,12 +546,12 @@ $$\begin{bmatrix} PE_{(pos+k,2i)} \\ PE_{(pos+k,2i+1)} \end{bmatrix} = \begin{bm
 修改注意力计算：
 $$\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}} + B\right)V$$
 
-其中$B_{ij} = b_{i-j}$是基于相对位置$i-j$的可学习偏置。
+其中 $B_{ij} = b_{i-j}$ 是基于相对位置 $i-j$ 的可学习偏置。
 
 **优势：**
 - 天然的长度泛化
-- 参数效率：只需要$2 \times \text{max\_relative\_position} - 1$个参数
-- 对称性：$b_{k} = b_{-k}$可以强制实现
+- 参数效率：只需要 $2 \times \text{max\_relative\_position} - 1$ 个参数
+- 对称性： $b_{k} = b_{-k}$ 可以强制实现
 
 #### 练习 1.7：设计位置编码实验
 设计实验比较不同位置编码在以下任务上的表现：
@@ -729,8 +729,8 @@ NTK理论研究神经网络在无限宽度极限下的行为：
 RoPE的NTK具有特殊的频率特性，这启发了几种扩展方法：
 
 1. **NTK-aware Interpolation**
-   - 通过调整RoPE的基频$\theta$来改变NTK的频谱
-   - 公式：$\theta' = \theta \cdot \alpha^{-2/d}$，其中$\alpha$是扩展因子
+   - 通过调整RoPE的基频 $\theta$ 来改变NTK的频谱
+   - 公式： $\theta' = \theta \cdot \alpha^{-2/d}$ ，其中 $\alpha$ 是扩展因子
    - 保持了相邻位置的局部相似性，同时扩展了全局感受野
 
 2. **Dynamic NTK Scaling**
@@ -795,7 +795,7 @@ $$\text{FFN}(x) = \text{Act}(xW_1 + b_1)W_2 + b_2$$
 其中：
 - $W_1 \in \mathbb{R}^{d_{model} \times d_{ff}}$
 - $W_2 \in \mathbb{R}^{d_{ff} \times d_{model}}$
-- 通常$d_{ff} = 4 \times d_{model}$
+- 通常 $d_{ff} = 4 \times d_{model}$
 
 ### 1.4.2 为什么需要FFN？
 
@@ -805,13 +805,13 @@ $$\text{FFN}(x) = \text{Act}(xW_1 + b_1)W_2 + b_2$$
 - 增强模型的表达能力
 
 **2. 特征扩展与压缩**
-- 扩展到高维空间（$d_{ff} > d_{model}$）
+- 扩展到高维空间（ $d_{ff} > d_{model}$ ）
 - 在高维空间进行复杂计算
 - 压缩回原始维度
 
 **3. 记忆存储假说**
 研究表明，FFN可能存储了大量的"事实知识"：
-- 键值记忆：$W_1$的行作为键，$W_2$的列作为值
+- 键值记忆： $W_1$ 的行作为键， $W_2$ 的列作为值
 - 模式匹配：激活函数决定哪些"记忆"被检索
 
 **🔬 研究线索：** FFN真的是记忆存储吗？一些证据：
@@ -838,7 +838,7 @@ $$\text{ReLU}(x) = \max(0, x)$$
 BERT推广了GELU：
 $$\text{GELU}(x) = x \cdot \Phi(x) \approx 0.5x(1 + \tanh(\sqrt{2/\pi}(x + 0.044715x^3)))$$
 
-其中$\Phi(x)$是标准正态分布的CDF。
+其中 $\Phi(x)$ 是标准正态分布的CDF。
 
 优点：
 - 平滑可微
@@ -907,15 +907,15 @@ $$\text{GeGLU}(x) = (xW_1 + b_1) \otimes \text{GELU}(xW_g + b_g)$$
 - 实践中性能优于标准FFN
 
 **⚡ 设计选择：** 
-使用GLU变体需要更多参数（额外的$W_g$），但通常值得：
-- 保持相同参数量：减少$d_{ff}$
-- 保持相同$d_{ff}$：接受参数增加
+使用GLU变体需要更多参数（额外的 $W_g$ ），但通常值得：
+- 保持相同参数量：减少 $d_{ff}$
+- 保持相同 $d_{ff}$ ：接受参数增加
 - 实践中两种都有采用
 
 ### 1.4.5 FFN的设计选择
 
 **1. 扩展比例**
-- 标准：$d_{ff} = 4 \times d_{model}$
+- 标准： $d_{ff} = 4 \times d_{model}$
 - 趋势：更大的模型用更小的比例（如2.5x）
 - 权衡：容量vs效率
 
@@ -968,13 +968,13 @@ $$\text{GeGLU}(x) = (xW_1 + b_1) \otimes \text{GELU}(xW_g + b_g)$$
 ### 1.4.6 FFN的优化技巧
 
 **1. 参数初始化**
-- Xavier初始化（适用于tanh/sigmoid）：$W \sim \mathcal{U}(-\sqrt{6/(n_{in}+n_{out})}, \sqrt{6/(n_{in}+n_{out})})$
-- He初始化（适用于ReLU）：$W \sim \mathcal{N}(0, 2/n_{in})$
+- Xavier初始化（适用于tanh/sigmoid）： $W \sim \mathcal{U}(-\sqrt{6/(n_{in}+n_{out})}, \sqrt{6/(n_{in}+n_{out})})$
+- He初始化（适用于ReLU）： $W \sim \mathcal{N}(0, 2/n_{in})$
 - 门控单元（如GLU、SwiGLU）的门控参数通常初始化使其输出接近0.5，确保训练初期门控处于半开半闭状态，允许梯度流动
 - 有时需要更小的初始化防止训练不稳定
 
 **2. 正则化**
-- Dropout：通常只在$W_2$之前
+- Dropout：通常只在 $W_2$ 之前
 - 权重衰减：FFN占参数量大，正则化重要
 - 激活值裁剪：将中间激活值限制在[-c, c]范围内（如c=10），防止极端值导致的梯度爆炸或数值溢出
 
@@ -984,7 +984,7 @@ $$\text{GeGLU}(x) = (xW_1 + b_1) \otimes \text{GELU}(xW_g + b_g)$$
 - int8/fp8量化（推理时）
 
 **🔬 研究线索：** 
-- 自适应FFN：根据输入动态调整$d_{ff}$
+- 自适应FFN：根据输入动态调整 $d_{ff}$
 - 条件计算：不同类型的输入使用不同的FFN路径
 - 持续学习：如何在不遗忘的情况下更新FFN中的"知识"？
 
@@ -1029,16 +1029,16 @@ $$\text{GeGLU}(x) = (xW_1 + b_1) \otimes \text{GELU}(xW_g + b_g)$$
 残差连接的基本形式：
 $$y = x + F(x)$$
 
-其中$F(x)$是某个子层（如注意力或FFN）。
+其中 $F(x)$ 是某个子层（如注意力或FFN）。
 
 **为什么需要残差连接？**
 
 1. **梯度直通路径**
-   - 反向传播时：$\frac{\partial L}{\partial x} = \frac{\partial L}{\partial y}(1 + \frac{\partial F}{\partial x})$
-   - 即使$\frac{\partial F}{\partial x}$很小，梯度仍可通过"+1"项传递
+   - 反向传播时： $\frac{\partial L}{\partial x} = \frac{\partial L}{\partial y}(1 + \frac{\partial F}{\partial x})$
+   - 即使 $\frac{\partial F}{\partial x}$ 很小，梯度仍可通过"+1"项传递
 
 2. **恒等映射的简化**
-   - 网络可以轻易学习恒等映射（让$F(x) \approx 0$）
+   - 网络可以轻易学习恒等映射（让 $F(x) \approx 0$ ）
    - 降低了优化难度
 
 3. **特征重用**
@@ -1046,7 +1046,7 @@ $$y = x + F(x)$$
    - 不同层次的特征自然融合
 
 **🔬 研究线索：** 残差连接是否总是最优的？一些变体：
-- 加权残差：$y = \alpha x + (1-\alpha)F(x)$
+- 加权残差： $y = \alpha x + (1-\alpha)F(x)$
 - 密集连接：连接到所有之前的层
 - 随机深度：训练时随机跳过某些层
 
@@ -1119,13 +1119,13 @@ $$\text{Output} = x + \text{Sublayer}(\text{LN}(x))$$
 - 在注意力的Q、K、V投影后
 
 **2. 无参数层归一化**
-- 移除可学习的$\gamma$和$\beta$
+- 移除可学习的 $\gamma$ 和 $\beta$
 - 简化但可能限制表达能力
 - 某些场景下性能相当
 
 **3. RMSNorm（Root Mean Square Normalization）**
 $$\text{RMSNorm}(x) = \frac{x}{\text{RMS}(x)} \cdot \gamma$$
-其中$\text{RMS}(x) = \sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2}$
+其中 $\text{RMS}(x) = \sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2}$
 
 优点：
 - 计算更简单（无需计算均值）
@@ -1147,8 +1147,8 @@ $$\text{RMSNorm}(x) = \frac{x}{\text{RMS}(x)} \cdot \gamma$$
 - 反向传播：梯度爆炸或消失
 
 **2. 深度缩放（GPT-2引入）**
-- 在残差连接前乘以$1/\sqrt{N}$
-- $N$是残差层的数量
+- 在残差连接前乘以 $1/\sqrt{N}$
+- $N$ 是残差层的数量
 - 防止残差累积过大
 
 **3. 子层输出缩放**
@@ -1250,20 +1250,20 @@ $$\text{RMSNorm}(x) = \frac{x}{\text{RMS}(x)} \cdot \gamma$$
 
 ### 1.6.1 效率优化：稀疏注意力
 
-标准注意力的$O(n^2)$复杂度是Transformer处理长序列的阿喀琉斯之踵。当序列长度从512增加到8192时，注意力计算量增加256倍！稀疏注意力通过巧妙地限制注意力连接模式，在保持模型表达能力的同时大幅降低计算复杂度。
+标准注意力的 $O(n^2)$ 复杂度是Transformer处理长序列的阿喀琉斯之踵。当序列长度从512增加到8192时，注意力计算量增加256倍！稀疏注意力通过巧妙地限制注意力连接模式，在保持模型表达能力的同时大幅降低计算复杂度。
 
 **1. Sparse Transformer (OpenAI, 2019)**
 
 OpenAI提出的开创性工作，通过精心设计的固定稀疏模式实现高效计算：
 - **局部注意力**：每个位置关注固定大小的局部窗口，捕捉短程依赖
 - **跨步注意力**：以固定步长采样的全局连接，确保信息能在整个序列中流动
-- 将复杂度从$O(n^2)$降至$O(n\sqrt{n})$，使得处理64K长度的序列成为可能
+- 将复杂度从 $O(n^2)$ 降至 $O(n\sqrt{n})$ ，使得处理64K长度的序列成为可能
 - 在图像、音频生成任务上展现了处理超长序列的能力
 
 **2. Longformer (AllenAI, 2020)**
 
 专为文档理解设计的稀疏注意力机制：
-- **滑动窗口注意力**：大小为w的局部窗口，复杂度$O(n \times w)$
+- **滑动窗口注意力**：大小为w的局部窗口，复杂度 $O(n \times w)$
 - **全局注意力**：特定任务相关token（如[CLS]、问题token）与所有位置连接
 - **扩张滑动窗口**：在更高层使用更大的窗口，类似CNN中的空洞卷积
 - 在长文档问答、文档分类等任务上显著优于RoBERTa
@@ -1283,7 +1283,7 @@ OpenAI提出的开创性工作，通过精心设计的固定稀疏模式实现�
 通过局部敏感哈希（LSH）实现内容相关的稀疏注意力：
 - **LSH注意力**：使用哈希函数将相似的查询和键映射到同一个桶中
 - **可逆层**：通过可逆残差连接节省激活内存
-- 将注意力复杂度降至$O(n\log n)$，内存使用降至$O(n)$
+- 将注意力复杂度降至 $O(n\log n)$ ，内存使用降至 $O(n)$
 - 特别适合需要根据内容动态确定注意力模式的任务
 
 **稀疏注意力的设计哲学**：
@@ -1360,7 +1360,7 @@ GPT系列的成功彻底改变了社区对架构选择的看法：
 Google使用进化算法搜索更好的Transformer变体，Primer是其最佳发现：
 
 - **主要改进**：
-  - Squared ReLU激活：$f(x) = x^2 \cdot \mathbb{1}(x > 0)$
+  - Squared ReLU激活： $f(x) = x^2 \cdot \mathbb{1}(x > 0)$
   - 移除一个归一化层
   - 将部分非线性移到注意力之后
 - **性能提升**：在下游任务上仅有3-5%的改进
@@ -1381,10 +1381,10 @@ Google使用进化算法搜索更好的Transformer变体，Primer是其最佳发
 
 Facebook AI提出的Linformer基于一个关键观察：注意力矩阵往往是低秩的。
 
-- **核心思想**：将$n \times n$的注意力矩阵投影到$n \times k$的低维空间（$k \ll n$）
+- **核心思想**：将 $n \times n$ 的注意力矩阵投影到 $n \times k$ 的低维空间（ $k \ll n$ ）
   $$\text{Attention}(Q,K,V) = \text{softmax}(Q(EK)^T/\sqrt{d})FV$$
-  其中$E, F \in \mathbb{R}^{k \times n}$是可学习的投影矩阵
-- **复杂度降低**：从$O(n^2)$降至$O(nk)$，当$k$固定时达到线性复杂度
+  其中 $E, F \in \mathbb{R}^{k \times n}$ 是可学习的投影矩阵
+- **复杂度降低**：从 $O(n^2)$ 降至 $O(nk)$ ，当 $k$ 固定时达到线性复杂度
 - **实证发现**：
   - 自注意力矩阵的秩通常远小于序列长度
   - 对于256维的序列，秩通常在50以下
@@ -1397,15 +1397,15 @@ Google提出的Performer通过核方法的视角重新诠释了注意力机制�
 
 - **理论基础**：将softmax注意力重写为核函数形式
   $$\text{softmax}(QK^T) \approx \phi(Q)\phi(K)^T$$
-  其中$\phi$是随机特征映射
+  其中 $\phi$ 是随机特征映射
 - **FAVOR+算法**：使用正交随机特征来近似高斯核
   $$\phi(x) = \frac{e^{-\|x\|^2/2}}{\sqrt{m}}[e^{w_1^Tx},...,e^{w_m^Tx}]$$
 - **优势**：
-  - 线性时间和空间复杂度$O(n)$
+  - 线性时间和空间复杂度 $O(n)$
   - 保持了注意力的概率解释
   - 理论保证近似误差界
 - **实践挑战**：
-  - 需要大量随机特征（通常$m > d$）才能达到好的近似
+  - 需要大量随机特征（通常 $m > d$ ）才能达到好的近似
   - 对于某些任务，softmax的"赢者通吃"特性很重要，但核近似会平滑化
   - 实际加速效果受限于随机特征的计算开销
 
@@ -1430,9 +1430,9 @@ OpenAI的开创性研究发现了神经语言模型的幂律扩展关系：
 $$L = aN^{-\alpha} + bD^{-\beta} + cC^{-\gamma} + \epsilon$$
 
 其中：
-- $L$是测试损失，$N$是参数量，$D$是数据token数，$C$是计算FLOPs
-- 典型值：$\alpha \approx 0.076$，$\beta \approx 0.095$，$\gamma \approx 0.050$
-- $\epsilon$是不可约误差，代表任务的理论下界
+- $L$ 是测试损失， $N$ 是参数量， $D$ 是数据token数， $C$ 是计算FLOPs
+- 典型值： $\alpha \approx 0.076$ ， $\beta \approx 0.095$ ， $\gamma \approx 0.050$
+- $\epsilon$ 是不可约误差，代表任务的理论下界
 
 **关键发现**：
 - **等比例扩展**：最优配置下，参数量和数据量应该等比例增长
