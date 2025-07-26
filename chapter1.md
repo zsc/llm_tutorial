@@ -23,7 +23,7 @@ Transformer架构自2017年提出以来，已成为现代大型语言模型的�
 
 $$\text{Attention}(q, K, V) = \sum_i \alpha(q, k_i) \cdot v_i$$
 
-其中$\alpha(q, k_i)$是注意力权重，满足$\sum_i \alpha(q, k_i) = 1$。
+其中 $\alpha(q, k_i)$ 是注意力权重，满足$\sum_i \alpha(q, k_i) = 1$。
 
 ### 1.1.2 缩放点积注意力
 
