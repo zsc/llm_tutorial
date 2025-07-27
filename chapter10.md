@@ -308,11 +308,11 @@ zero_point = round(-min_val / scale)
 
 $$\text{Attention}(Q_t, K_{1:t}, V_{1:t}) = \text{softmax}\left(\frac{Q_t K_{1:t}^T}{\sqrt{d}}\right) V_{1:t}$$
 
-不缓存将导致$O(n^2)$的重复计算。
+不缓存将导致 $O(n^2)$ 的重复计算。
 
 **内存需求分析**：
 
-对于批大小$B$，序列长度$L$，层数$N_{\text{layers}}$，隐藏维度$d$：
+对于批大小 $B$ ，序列长度 $L$ ，层数 $N_{\text{layers}}$ ，隐藏维度 $d$ ：
 
 $$\text{Memory}_{\text{KV}} = 2 \times B \times L \times N_{\text{layers}} \times d \times \text{sizeof(dtype)}$$
 
@@ -368,7 +368,7 @@ KV Cache量化到低精度：
    $$\text{TopK\_Attention} = \text{TopK}(\text{scores}, k=\text{budget})$$
 
 2. **滑动窗口**：
-   只保留最近的$w$个token的KV
+   只保留最近的 $w$ 个token的KV
 
 **低秩压缩**：
 
@@ -394,11 +394,11 @@ Layer i+1: K_{i+1} = f(K_i), V_{i+1} = g(V_i)
 
 $$\text{MQA: } K \in \mathbb{R}^{L \times d}, \text{ instead of } \mathbb{R}^{h \times L \times d/h}$$
 
-内存减少$h$倍。
+内存减少 $h$ 倍。
 
 **Grouped-Query Attention**：
 
-折中方案，$g$组共享：
+折中方案， $g$ 组共享：
 
 $$\text{GQA: groups} = g, \text{ heads per group} = h/g$$
 
@@ -953,7 +953,7 @@ P3: 后台任务（尽力而为）
 
 $$\text{Time} = \alpha + \frac{m}{\beta} \times \frac{2(p-1)}{p}$$
 
-其中$\alpha$是延迟，$\beta$是带宽，$m$是消息大小，$p$是进程数。
+其中 $\alpha$ 是延迟， $\beta$ 是带宽， $m$ 是消息大小， $p$ 是进程数。
 
 ### 10.4.3 任务调度
 

@@ -288,7 +288,7 @@
 3. **逻辑连贯性**：
    $$\text{Coherence} = \frac{1}{N-1}\sum_{i=1}^{N-1} \text{Sim}(s_i, s_{i+1})$$
    
-   其中$s_i$是第i个句子的embedding。
+   其中 $s_i$ 是第i个句子的embedding。
 
 4. **写作质量**：
    - 语法正确性
@@ -325,7 +325,7 @@
    同时评估多个质量维度：
    $$\mathcal{L} = \sum_{i} \lambda_i \mathcal{L}_i$$
    
-   其中$\mathcal{L}_i$是第i个质量任务的损失。
+   其中 $\mathcal{L}_i$ 是第i个质量任务的损失。
 
 **统计指标计算**：
 
@@ -532,12 +532,12 @@
 2. **基于规模的配比**：
    $$P_i = \frac{N_i^\alpha}{\sum_j N_j^\alpha}$$
    
-   其中$N_i$是数据源i的样本数，$\alpha \in [0.5, 1]$控制平滑程度。
+   其中 $N_i$ 是数据源i的样本数， $\alpha \in [0.5, 1]$ 控制平滑程度。
 
 3. **基于质量的配比**：
    $$P_i = \frac{Q_i \cdot N_i^\alpha}{\sum_j Q_j \cdot N_j^\alpha}$$
    
-   其中$Q_i$是数据源i的平均质量分数。
+   其中 $Q_i$ 是数据源i的平均质量分数。
 
 **动态配比调整**：
 
@@ -548,7 +548,7 @@
    将数据源选择建模为多臂老虎机问题：
    $$\text{UCB}_i = \bar{r}_i + c\sqrt{\frac{\ln t}{n_i}}$$
    
-   其中$\bar{r}_i$是数据源i的平均奖励，$n_i$是选择次数。
+   其中 $\bar{r}_i$ 是数据源i的平均奖励， $n_i$ 是选择次数。
 
 3. **梯度追踪方法**：
    $$\frac{\partial \mathcal{L}}{\partial p_i} = \mathbb{E}_{x \sim D_i}[\nabla_\theta \mathcal{L}(x)] \cdot \frac{\partial \theta}{\partial p_i}$$
@@ -564,7 +564,7 @@
 2. **弹性权重巩固（EWC）**：
    $$\mathcal{L}_{\text{EWC}} = \mathcal{L}_{\text{task}} + \lambda \sum_i F_i(\theta_i - \theta_i^*)^2$$
    
-   其中$F_i$是Fisher信息矩阵的对角元素。
+   其中 $F_i$ 是Fisher信息矩阵的对角元素。
 
 3. **渐进式训练**：
    
@@ -661,7 +661,7 @@ $$\eta_t = \begin{cases}
 
 $$R(t) = R_0 \cdot e^{-t/\tau}$$
 
-其中$R(t)$是时间t后的记忆保留率，$\tau$是遗忘时间常数。
+其中 $R(t)$ 是时间t后的记忆保留率， $\tau$ 是遗忘时间常数。
 
 **间隔重复优化**：
 
@@ -785,7 +785,7 @@ $$t_{n+1} = t_n \cdot \text{EF}$$
 
 $$\text{Diversity} = -\sum_{c \in \text{Categories}} p(c) \log p(c)$$
 
-其中$p(c)$是类别c的比例。
+其中 $p(c)$ 是类别c的比例。
 
 ### 7.4.2 高质量响应的标准
 
@@ -856,7 +856,7 @@ $$Q_{\text{response}} = w_1 \cdot \text{Accuracy} + w_2 \cdot \text{Helpfulness}
 Bradley-Terry模型：
 $$P(A > B) = \frac{\exp(r_A)}{\exp(r_A) + \exp(r_B)}$$
 
-其中$r_A$和$r_B$是响应的奖励分数。
+其中 $r_A$ 和 $r_B$ 是响应的奖励分数。
 
 ### 7.4.5 安全对齐数据
 
@@ -1277,7 +1277,7 @@ $$P(A > B) = \frac{\exp(r_A)}{\exp(r_A) + \exp(r_B)}$$
 3. **边际采样**：
    $$\text{Margin}(x) = p(y_1|x) - p(y_2|x)$$
    
-   其中$y_1$和$y_2$是概率最高的两个类别。
+   其中 $y_1$ 和 $y_2$ 是概率最高的两个类别。
 
 **多样性采样**：
 

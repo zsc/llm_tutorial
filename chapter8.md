@@ -36,7 +36,7 @@ $$\text{Global\_Batch} = \sum_{i=1}^{N} \text{Local\_Batch}_i$$
    设备独立更新，通过参数服务器协调：
    $$W_{t+1} = W_t - \eta \nabla W_i^{(t-\tau)}$$
    
-   其中$\tau$是延迟。
+   其中 $\tau$ 是延迟。
 
 3. **局部SGD**：
    每K步同步一次，减少通信开销：
@@ -45,12 +45,12 @@ $$\text{Global\_Batch} = \sum_{i=1}^{N} \text{Local\_Batch}_i$$
 **AllReduce优化**：
 
 1. **Ring AllReduce**：
-   - 时间复杂度：$O(N)$
+   - 时间复杂度： $O(N)$
    - 带宽利用率：接近理论最优
    - 适合同构网络
 
 2. **Tree AllReduce**：
-   - 时间复杂度：$O(\log N)$
+   - 时间复杂度： $O(\log N)$
    - 延迟更低
    - 适合大规模集群
 
@@ -587,17 +587,17 @@ $$\text{Total\_Memory} = \text{Model} + \text{Optimizer} + \text{Gradients} + \t
 通过矩阵分解减少二阶动量内存：
 
 1. **行列分解**：
-   对于权重矩阵$W \in \mathbb{R}^{m \times n}$：
+   对于权重矩阵 $W \in \mathbb{R}^{m \times n}$ ：
    $$V \approx R \cdot C^T$$
    
-   其中$R \in \mathbb{R}^m$，$C \in \mathbb{R}^n$。
+   其中 $R \in \mathbb{R}^m$ ， $C \in \mathbb{R}^n$ 。
 
 2. **更新规则**：
    $$R_t = \beta_2 R_{t-1} + (1-\beta_2) \text{RowMean}(G_t^2)$$
    $$C_t = \beta_2 C_{t-1} + (1-\beta_2) \text{ColMean}(G_t^2)$$
 
 3. **内存节省**：
-   从$O(mn)$降至$O(m+n)$。
+   从 $O(mn)$ 降至 $O(m+n)$ 。
 
 **8-bit优化器**：
 
@@ -1200,7 +1200,7 @@ $$\text{Total\_Memory} = \text{Model} + \text{Optimizer} + \text{Gradients} + \t
 1. **流水线并行**：
    $$\text{Time} = \max(\text{Compute}, \text{Comm})$$
    
-   而非$\text{Compute} + \text{Comm}$。
+   而非 $\text{Compute} + \text{Comm}$ 。
 
 2. **优先级调度**：
    - 关键路径优先
@@ -1258,7 +1258,7 @@ $$\text{Total\_Memory} = \text{Model} + \text{Optimizer} + \text{Gradients} + \t
    \lceil x \rceil & \text{with prob } x - \lfloor x \rfloor
    \end{cases}$$
    
-   保证无偏：$\mathbb{E}[Q(x)] = x$。
+   保证无偏： $\mathbb{E}[Q(x)] = x$ 。
 
 2. **自适应量化**：
    根据梯度分布动态调整量化级别。
@@ -1289,7 +1289,7 @@ $$e_{t+1} = g_t + e_t - \text{Compress}(g_t + e_t)$$
 2. **延迟补偿**：
    $$w_{t+1} = w_t - \eta_t \cdot \frac{g_t^{(i)}}{1 + \tau_i}$$
    
-   其中$\tau_i$是延迟。
+   其中 $\tau_i$ 是延迟。
 
 **去中心化通信**：
 

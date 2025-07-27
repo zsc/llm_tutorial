@@ -19,25 +19,25 @@ GPT（Generative Pre-trained Transformer）开创了大规模无监督预训练�
 
 ### 2.1.1 语言的概率模型
 
-给定一个文本序列$x = (x_1, x_2, ..., x_n)$，语言模型的目标是学习概率分布$P(x)$。通过链式法则，我们可以分解为：
+给定一个文本序列 $x = (x_1, x_2, ..., x_n)$ ，语言模型的目标是学习概率分布 $P(x)$ 。通过链式法则，我们可以分解为：
 
 $$P(x) = P(x_1) \cdot P(x_2|x_1) \cdot P(x_3|x_1, x_2) \cdots P(x_n|x_1, ..., x_{n-1})$$
 
 更紧凑地写作：
 $$P(x) = \prod_{i=1}^{n} P(x_i|x_{<i})$$
 
-其中$x_{<i} = (x_1, ..., x_{i-1})$表示位置$i$之前的所有token。
+其中 $x_{<i} = (x_1, ..., x_{i-1})$ 表示位置 $i$ 之前的所有token。
 
 **与统计机器翻译（SMT）的联系：**
 这个概率分解确实与SMT中的n-gram语言模型在形式上完全一致。区别在于：
 - **SMT**: 通常使用n-gram（如3-gram、5-gram），只看固定长度的历史
-- **GPT**: 使用Transformer编码整个历史$x_{<i}$，理论上可以利用任意长的上下文
+- **GPT**: 使用Transformer编码整个历史 $x_{<i}$ ，理论上可以利用任意长的上下文
 - **参数化**: SMT直接存储n-gram概率表，GPT通过神经网络参数化条件分布
 - **泛化能力**: GPT可以对未见过的上下文组合给出合理概率，而n-gram模型需要回退策略
 
 ### 2.1.2 最大似然估计
 
-给定数据集$\mathcal{D} = \{x^{(1)}, x^{(2)}, ..., x^{(N)}\}$，我们通过最大似然估计学习模型参数$\theta$：
+给定数据集 $\mathcal{D} = \{x^{(1)}, x^{(2)}, ..., x^{(N)}\}$ ，我们通过最大似然估计学习模型参数 $\theta$ ：
 
 $$\theta^* = \arg\max_{\theta} \prod_{x \in \mathcal{D}} P_{\theta}(x)$$
 
@@ -145,10 +145,10 @@ $$\theta^* = \arg\max_{\theta} \sum_{x \in \mathcal{D}} \sum_{i=1}^{|x|} \log P_
 自回归模型做了一个关键假设：
 $$P(x_i|x_{<i}) = P(x_i|f_{\theta}(x_{<i}))$$
 
-即当前token只依赖于历史的某个表示$f_{\theta}(x_{<i})$，而非原始序列。这是一个信息瓶颈，但Transformer的强大表示能力使其work。
+即当前token只依赖于历史的某个表示 $f_{\theta}(x_{<i})$ ，而非原始序列。这是一个信息瓶颈，但Transformer的强大表示能力使其work。
 
 #### 练习 2.1：推导困惑度与交叉熵的关系
-证明语言模型的困惑度(Perplexity)等于$e^H$，其中$H$是交叉熵损失。
+证明语言模型的困惑度(Perplexity)等于 $e^H$ ，其中 $H$ 是交叉熵损失。
 
 <details>
 <summary>查看答案</summary>
@@ -205,8 +205,8 @@ $$P(x_i|x_{<i}) = P(x_i|f_{\theta}(x_{<i}))$$
 $$x_i \sim P_{\theta}(x_i|x_{<i})$$
 
 **采样策略：**
-1. **贪婪解码**：$x_i = \arg\max P_{\theta}(x_i|x_{<i})$
-2. **温度采样**：$P(x_i) \propto \exp(\log P_{\theta}(x_i|x_{<i})/T)$
+1. **贪婪解码**： $x_i = \arg\max P_{\theta}(x_i|x_{<i})$
+2. **温度采样**： $P(x_i) \propto \exp(\log P_{\theta}(x_i|x_{<i})/T)$
 3. **Top-k采样**：只从概率最高的k个token中采样
 4. **核采样(Top-p)**：从累积概率达到p的最小集合中采样
 
@@ -342,15 +342,15 @@ $$\mathcal{L}_{AR} = -\sum_{i=1}^{n} \log P(x_i|x_{<i})$$
 
 **2. 掩码语言建模（BERT）**
 $$\mathcal{L}_{MLM} = -\sum_{i \in \mathcal{M}} \log P(x_i|x_{\backslash \mathcal{M}})$$
-其中$\mathcal{M}$是被掩码的位置集合。
+其中 $\mathcal{M}$ 是被掩码的位置集合。
 
 **3. 置换语言建模（XLNet）**
 $$\mathcal{L}_{PLM} = -\mathbb{E}_{z \sim \mathcal{Z}_n} \left[\sum_{i=1}^{n} \log P(x_{z_i}|x_{z_{<i}})\right]$$
-其中$\mathcal{Z}_n$是所有可能的排列。
+其中 $\mathcal{Z}_n$ 是所有可能的排列。
 
 **4. 去噪自编码（T5, BART）**
 $$\mathcal{L}_{DAE} = -\log P(x|\tilde{x})$$
-其中$\tilde{x}$是加噪的输入。
+其中 $\tilde{x}$ 是加噪的输入。
 
 ### 2.2.2 为什么GPT选择自回归？
 
@@ -463,7 +463,7 @@ FIM格式: [Prefix] [Suffix] <FILL> [Middle] <END>
 **1. 条件语言建模**
 $$P(x|c) = \prod_{i=1}^{n} P(x_i|x_{<i}, c)$$
 
-其中$c$可以是：
+其中 $c$ 可以是：
 - 主题/领域标签
 - 情感/风格标记
 - 结构化属性
@@ -706,7 +706,7 @@ Output: Bonjour le monde
 **采样策略：**
 1. **静态配比**：预先混合
 2. **动态采样**：训练时按比例采样
-3. **温度采样**：$p_i \propto (n_i)^{1/T}$
+3. **温度采样**： $p_i \propto (n_i)^{1/T}$
 
 **⚡ 设计选择：** 
 - 高质量数据可以多次使用
@@ -1015,7 +1015,7 @@ $$g \leftarrow g \cdot \min\left(1, \frac{c}{||g||_2}\right)$$
 大模型训练中，损失突然爆炸并非罕见。关键是如何快速检测和恢复。
 
 **检测机制**：
-- **移动平均监控**：损失超过 $\mu + k\sigma$ 触发警报（$k$ 通常取3-5）
+- **移动平均监控**：损失超过 $\mu + k\sigma$ 触发警报（ $k$ 通常取3-5）
 - **梯度范数监控**：突增往往预示即将崩溃
 - **激活值统计**：监控各层输出的均值和方差
 
@@ -1040,9 +1040,9 @@ $$g \leftarrow g \cdot \min\left(1, \frac{c}{||g||_2}\right)$$
 初始化不当是训练不稳定的常见原因。现代初始化方法需要考虑架构特性。
 
 **标准初始化策略**：
-- **Xavier/Glorot**：$\sigma = \sqrt{2 / (n_{in} + n_{out})}$ 适用于线性层
-- **He/Kaiming**：$\sigma = \sqrt{2 / n_{in}}$ 适用于ReLU网络
-- **GPT风格**：$\sigma = 0.02 / \sqrt{2 \cdot n_{layers}}$ 考虑深度累积
+- **Xavier/Glorot**： $\sigma = \sqrt{2 / (n_{in} + n_{out})}$ 适用于线性层
+- **He/Kaiming**： $\sigma = \sqrt{2 / n_{in}}$ 适用于ReLU网络
+- **GPT风格**： $\sigma = 0.02 / \sqrt{2 \cdot n_{layers}}$ 考虑深度累积
 
 **特殊组件初始化**：
 1. **Embedding层**：
@@ -1050,7 +1050,7 @@ $$g \leftarrow g \cdot \min\left(1, \frac{c}{||g||_2}\right)$$
    - 位置编码：更小的方差避免主导
    
 2. **输出层**：
-   - 更小初始化：$\sigma = 0.02 / \sqrt{n_{layers}}$
+   - 更小初始化： $\sigma = 0.02 / \sqrt{n_{layers}}$
    - 避免初始预测过于自信
 
 3. **LayerNorm**：
@@ -1068,9 +1068,9 @@ $$g \leftarrow g \cdot \min\left(1, \frac{c}{||g||_2}\right)$$
 预热不仅是技巧，更是必需。其背后的数学原理值得深究。
 
 **预热策略对比**：
-- **线性预热**：$lr_t = lr_{target} \cdot \min(1, t/T_{warmup})$
-- **余弦预热**：$lr_t = lr_{target} \cdot 0.5(1 + \cos(\pi \cdot \max(0, 1-t/T_{warmup})))$
-- **指数预热**：$lr_t = lr_{target} \cdot (1 - e^{-t/\tau})$
+- **线性预热**： $lr_t = lr_{target} \cdot \min(1, t/T_{warmup})$
+- **余弦预热**： $lr_t = lr_{target} \cdot 0.5(1 + \cos(\pi \cdot \max(0, 1-t/T_{warmup})))$
+- **指数预热**： $lr_t = lr_{target} \cdot (1 - e^{-t/\tau})$
 
 **预热步数选择**：
 - 经验法则：总步数的0.1%-1%
@@ -1155,7 +1155,7 @@ Adam等自适应优化器的状态管理对稳定性至关重要。
    - 注意力权重分布
 
 3. **优化器统计**：
-   - 有效学习率（Adam中的 $lr/\sqrt{v}$）
+   - 有效学习率（Adam中的 $lr/\sqrt{v}$ ）
    - 动量累积情况
    - 更新方向一致性
 
@@ -1305,10 +1305,10 @@ Scaling Laws揭示了模型性能与规模的关系，但如何在有限资源�
 $$L(N, D, C) = \left(\frac{N_c}{N}\right)^{\alpha_N} + \left(\frac{D_c}{D}\right)^{\alpha_D} + \left(\frac{C_c}{C}\right)^{\alpha_C} + L_{\infty}$$
 
 其中：
-- $N$：模型参数量
-- $D$：训练数据量（tokens）
-- $C$：计算量（FLOPs）
-- $\alpha_N \approx 0.076$, $\alpha_D \approx 0.095$, $\alpha_C \approx 0.050$
+- $N$ ：模型参数量
+- $D$ ：训练数据量（tokens）
+- $C$ ：计算量（FLOPs）
+- $\alpha_N \approx 0.076$ , $\alpha_D \approx 0.095$ , $\alpha_C \approx 0.050$
 
 **关键洞察：**
 1. 模型和数据应该同步扩展
@@ -1391,7 +1391,7 @@ $$C_{total} = 6ND$$
 
 **1. 激活检查点（Gradient Checkpointing）**
 
-内存节省：$O(\sqrt{n_{layers}})$
+内存节省： $O(\sqrt{n_{layers}})$
 计算开销：~33%额外前向计算
 
 **2. 模型分片（ZeRO优化）**
@@ -1426,7 +1426,7 @@ $$C_{total} = 6ND$$
   - 需要更精细的初始化和归一化
   - 训练时间线性增长（串行依赖）
 - **效率特点**：
-  - 内存带宽需求：$O(L \times d_{model})$
+  - 内存带宽需求： $O(L \times d_{model})$
   - 推理延迟：严格线性于深度
 
 **宽度的优势与局限：**
@@ -1459,10 +1459,10 @@ aspect_ratio = d_model / n_layers
   - 大模型：头专门化更明显
   - 某些头专注位置，某些头专注语义
 
-**关键维度 $d_k = d_{model} / n_{heads}$：**
-- **下限约束**：$d_k \geq 64$ 保证足够表达能力
-- **上限考虑**：$d_k \leq 128$ 避免单头过于复杂
-- **量化友好**：$d_k$ 是8的倍数利于硬件加速
+**关键维度 $d_k = d_{model} / n_{heads}$ ：**
+- **下限约束**： $d_k \geq 64$ 保证足够表达能力
+- **上限考虑**： $d_k \leq 128$ 避免单头过于复杂
+- **量化友好**： $d_k$ 是8的倍数利于硬件加速
 
 **Multi-Query Attention (MQA) 的效率革命：**
 ```
@@ -1481,7 +1481,7 @@ MQA: K,V shape = [1, seq_len, d_model]
 前馈网络占据模型大部分参数，其设计直接影响效率。
 
 **标准4倍规则的由来：**
-- 经验发现：$d_{ff} = 4 \times d_{model}$ 效果好
+- 经验发现： $d_{ff} = 4 \times d_{model}$ 效果好
 - 理论解释：提供足够的非线性变换空间
 - 但非最优：许多神经元激活稀疏
 
@@ -1506,15 +1506,15 @@ MQA: K,V shape = [1, seq_len, d_model]
 - **问题**：标准注意力的 $O(n^2)$ 内存需求
 - **解决**：分块计算，融合内核
 - **效果**：
-  - 内存：$O(n)$ instead of $O(n^2)$
+  - 内存： $O(n)$ instead of $O(n^2)$
   - 速度：2-4倍提升（得益于更好的内存局部性）
 
 **线性注意力的近似：**
 - **Performer**：使用随机特征近似
-  - 复杂度：$O(n \times d \times log(d))$
+  - 复杂度： $O(n \times d \times log(d))$
   - 质量损失：长序列时明显
 - **LinFormer**：低秩分解
-  - 复杂度：$O(n \times k)$，$k$ 是秩
+  - 复杂度： $O(n \times k)$ ， $k$ 是秩
   - 适用场景：序列有冗余时
 
 **滑动窗口注意力：**

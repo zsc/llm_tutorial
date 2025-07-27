@@ -96,7 +96,7 @@ $$answer = \arg\max_a \sum_{i=1}^n \mathbb{1}[answer_i = a]$$
 **实现细节：**
 
 1. **采样策略**：
-   - 温度采样：$T \in [0.7, 1.0]$
+   - 温度采样： $T \in [0.7, 1.0]$
    - Top-p采样：保持多样性
    - 路径数量：通常5-40条
 
@@ -278,7 +278,7 @@ $$P(length) \propto \text{complexity}^{\alpha} \cdot \text{difficulty}^{\beta}$$
 **内存与计算复杂度：**
 
 1. **注意力复杂度**：
-   - 标准注意力：$O(n^2)$
+   - 标准注意力： $O(n^2)$
    - 长度1000时需要1M个注意力分数
    - 内存和计算呈平方增长
 
@@ -311,8 +311,8 @@ $$P(length) \propto \text{complexity}^{\alpha} \cdot \text{difficulty}^{\beta}$$
 **推理成本分析：**
 
 生成长度为 $L$ 的CoT：
-- 时间复杂度：$O(L^2)$（自回归生成）
-- 内存需求：$O(L \cdot d)$（KV缓存）
+- 时间复杂度： $O(L^2)$ （自回归生成）
+- 内存需求： $O(L \cdot d)$ （KV缓存）
 - API成本：正比于token数
 
 **优化策略：**
@@ -435,12 +435,12 @@ $$P(length) \propto \text{complexity}^{\alpha} \cdot \text{difficulty}^{\beta}$$
    - 错误类型分析
 
 2. **过程质量**：
-   - 逻辑连贯性：$\frac{\text{valid transitions}}{\text{total transitions}}$
+   - 逻辑连贯性： $\frac{\text{valid transitions}}{\text{total transitions}}$
    - 步骤必要性：无冗余步骤比例
    - 清晰度评分：可读性和理解性
 
 3. **效率指标**：
-   - 推理密度：$\frac{\text{useful steps}}{\text{total steps}}$
+   - 推理密度： $\frac{\text{useful steps}}{\text{total steps}}$
    - 计算效率：达到正确答案的平均步数
    - 成本效益：准确率提升/额外成本
 
@@ -546,7 +546,7 @@ $$R_{total} = \sum_{t=1}^T r_t \quad \text{vs} \quad R_{total} = r_T$$
    模型生成推理轨迹 $\tau = (s_0, a_0, s_1, a_1, ...)$
 
 2. **验证阶段**：
-   验证器 $V$ 对每步评分：$v_t = V(s_t, a_t)$
+   验证器 $V$ 对每步评分： $v_t = V(s_t, a_t)$
 
 3. **奖励计算**：
    $$r_t = \begin{cases}
@@ -960,9 +960,9 @@ $$L_{feedback} = -\sum_{(s,s')} \log P(s'|context, error\_type)$$
    $$Confidence = w_1 \cdot C_{syntax} + w_2 \cdot C_{local} + w_3 \cdot C_{global}$$
    
    其中：
-   - $C_{syntax}$：语法正确性得分
-   - $C_{local}$：局部推理有效性
-   - $C_{global}$：全局逻辑完整性
+   - $C_{syntax}$ ：语法正确性得分
+   - $C_{local}$ ：局部推理有效性
+   - $C_{global}$ ：全局逻辑完整性
 
 7. **学习与改进机制：**
    - **错误模式库**：
@@ -1115,8 +1115,8 @@ ToT中的应用：
 $$f(n) = g(n) + h(n)$$
 
 其中：
-- $g(n)$：从起点到n的实际成本
-- $h(n)$：从n到目标的估计成本
+- $g(n)$ ：从起点到n的实际成本
+- $h(n)$ ：从n到目标的估计成本
 
 **3. 蒙特卡洛树搜索（MCTS）：**
 
@@ -1332,7 +1332,7 @@ Bug
 数学推理要求极高的精确性，一个符号的错误就可能导致整个推导失败。
 
 **符号表示的标准化**：
-- LaTeX格式：$\int_0^1 x^2 dx = \frac{1}{3}$
+- LaTeX格式： $\int_0^1 x^2 dx = \frac{1}{3}$
 - 自然语言描述："从0到1对x平方积分等于1/3"
 - 混合表示：结合符号和解释
 
@@ -1387,9 +1387,9 @@ Bug
 $$V_{\text{proof}} = \alpha \cdot V_{\text{logic}} + \beta \cdot V_{\text{complete}} + \gamma \cdot V_{\text{correct}}$$
 
 其中：
-- $V_{\text{logic}}$：逻辑有效性得分
-- $V_{\text{complete}}$：完整性得分
-- $V_{\text{correct}}$：正确性得分
+- $V_{\text{logic}}$ ：逻辑有效性得分
+- $V_{\text{complete}}$ ：完整性得分
+- $V_{\text{correct}}$ ：正确性得分
 
 ### 5.6.3 代码推理的执行语义
 

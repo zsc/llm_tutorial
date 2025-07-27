@@ -149,7 +149,7 @@ $$\text{Energy Efficiency} = \frac{\text{Performance}}{\text{kWh}}$$
 
 $$\text{Demographic Parity} = |P(\hat{Y}=1|A=0) - P(\hat{Y}=1|A=1)|$$
 
-其中$A$是敏感属性。
+其中 $A$ 是敏感属性。
 
 ### 练习 12.1
 
@@ -365,7 +365,7 @@ $$\text{Demographic Parity} = |P(\hat{Y}=1|A=0) - P(\hat{Y}=1|A=1)|$$
 1. **HumanEval**：
    $$\text{pass@k} = \mathbb{E}_{problems}\left[1 - \frac{\binom{n-c}{k}}{\binom{n}{k}}\right]$$
    
-   其中$c$是通过的程序数，$n$是总生成数。
+   其中 $c$ 是通过的程序数， $n$ 是总生成数。
 
 2. **MBPP（基础编程）**：
    简单编程任务

@@ -19,11 +19,11 @@
 
 **注意力矩阵结构**：
 
-对于输入序列长度$n$，注意力矩阵$A \in \mathbb{R}^{n \times n}$：
+对于输入序列长度 $n$ ，注意力矩阵 $A \in \mathbb{R}^{n \times n}$ ：
 
 $$A_{ij} = \frac{\exp(q_i \cdot k_j / \sqrt{d})}{\sum_{k=1}^{n} \exp(q_i \cdot k_k / \sqrt{d})}$$
 
-其中$A_{ij}$表示位置$i$对位置$j$的注意力权重。
+其中 $A_{ij}$ 表示位置 $i$ 对位置 $j$ 的注意力权重。
 
 **常见注意力模式**：
 
@@ -54,7 +54,7 @@ $$A_{ij} = \frac{\exp(q_i \cdot k_j / \sqrt{d})}{\sum_{k=1}^{n} \exp(q_i \cdot k
 
 $$\text{Importance}_h = \mathbb{E}_{x \sim D}\left[\left\|\frac{\partial \mathcal{L}}{\partial A_h}\right\|_F\right]$$
 
-其中$A_h$是第$h$个头的注意力矩阵。
+其中 $A_h$ 是第 $h$ 个头的注意力矩阵。
 
 ### 11.1.3 注意力流分析
 
@@ -64,7 +64,7 @@ $$\text{Importance}_h = \mathbb{E}_{x \sim D}\left[\left\|\frac{\partial \mathca
 
 $$\text{Flow}_{i \rightarrow j} = \prod_{l=1}^{L} A^{(l)}_{path}$$
 
-其中$A^{(l)}_{path}$是第$l$层的路径注意力。
+其中 $A^{(l)}_{path}$ 是第 $l$ 层的路径注意力。
 
 **残差流分析**：
 
@@ -91,7 +91,7 @@ $$x^{(l+1)} = x^{(l)} + \text{Attn}^{(l)}(x^{(l)}) + \text{FFN}^{(l)}(x^{(l)})$$
 
 $$\text{Effect} = f(x, A) - f(x, A')$$
 
-其中$A'$是修改后的注意力。
+其中 $A'$ 是修改后的注意力。
 
 ### 11.1.5 可视化技术
 
@@ -292,7 +292,7 @@ $$\text{Effect} = f(x, A) - f(x, A')$$
 
 **激活模式识别**：
 
-对于神经元$n$，其激活值：
+对于神经元 $n$ ，其激活值：
 
 $$a_n = \sigma(W_n \cdot x + b_n)$$
 
@@ -316,7 +316,7 @@ $$a_n = \sigma(W_n \cdot x + b_n)$$
 
 **最大激活样本**：
 
-找到使神经元$n$激活最强的输入：
+找到使神经元 $n$ 激活最强的输入：
 
 $$X^*_n = \text{top-k}_{x \in D}\{a_n(x)\}$$
 
@@ -328,7 +328,7 @@ $$X^*_n = \text{top-k}_{x \in D}\{a_n(x)\}$$
 
 $$A = USV^T$$
 
-其中$U$的列向量代表主要激活模式。
+其中 $U$ 的列向量代表主要激活模式。
 
 ### 11.2.3 神经元消融研究
 
@@ -336,7 +336,7 @@ $$A = USV^T$$
 
 $$\Delta \mathcal{L} = \mathcal{L}(f(x)) - \mathcal{L}(f(x)|_{n=0})$$
 
-衡量神经元$n$的重要性。
+衡量神经元 $n$ 的重要性。
 
 **神经元组消融**：
 
@@ -354,15 +354,15 @@ $$h = f_{encoder}(a)$$
 $$\hat{a} = f_{decoder}(h)$$
 $$\mathcal{L} = ||a - \hat{a}||^2 + \lambda ||h||_1$$
 
-稀疏编码$h$提供可解释的特征。
+稀疏编码 $h$ 提供可解释的特征。
 
 **字典学习**：
 
-学习过完备字典$D$：
+学习过完备字典 $D$ ：
 
 $$a = Dh + \epsilon$$
 
-其中$h$是稀疏系数。
+其中 $h$ 是稀疏系数。
 
 ### 11.2.5 神经元探针
 
@@ -372,7 +372,7 @@ $$a = Dh + \epsilon$$
 
 $$p = Wa_l + b$$
 
-其中$a_l$是第$l$层的激活。
+其中 $a_l$ 是第 $l$ 层的激活。
 
 **非线性探针**：
 
@@ -864,7 +864,7 @@ $$\text{Circuit} = \arg\min_{S} |S| \text{ s.t. } \text{Performance}(S) \geq \th
 
 **直接效应**：
 
-组件$A$对$B$的直接影响：
+组件 $A$ 对 $B$ 的直接影响：
 
 $$\text{DE}(A \rightarrow B) = \frac{\partial B}{\partial A}$$
 
@@ -914,7 +914,7 @@ $$\text{Importance}_{ij} = |w_{ij} \cdot \frac{\partial L}{\partial w_{ij}}|$$
 
 $$W_{\text{effective}} = W \odot \sigma(\alpha)$$
 
-其中$\alpha$是可学习参数。
+其中 $\alpha$ 是可学习参数。
 
 ### 11.4.6 电路组合性
 
@@ -1112,7 +1112,7 @@ $$\text{Features} = \text{Neurons} \times \text{Superposition}$$
 
 $$\text{activation} = \sum_i \alpha_i \phi_i$$
 
-其中$\phi_i$是可解释的特征向量。
+其中 $\phi_i$ 是可解释的特征向量。
 
 ### 11.5.2 计算机制理解
 

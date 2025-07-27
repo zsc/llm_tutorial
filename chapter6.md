@@ -27,7 +27,7 @@ $$\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d}}\right)V$$
 线性化形式：
 $$\text{LinearAttn}(Q,K,V) = \phi(Q)[\phi(K)^T V]$$
 
-其中$\phi$是特征映射函数，关键在于利用结合律：
+其中 $\phi$ 是特征映射函数，关键在于利用结合律：
 $$\phi(Q)[\phi(K)^T V] = \phi(Q)[(\sum_i \phi(k_i) \otimes v_i)]$$
 
 这样可以先计算括号内的部分，复杂度从O(n²d)降到O(nd²)。
@@ -222,8 +222,8 @@ MoE的核心思想是将计算分配给多个专家网络，每个输入只激�
 $$\text{MoE}(x) = \sum_{i=1}^{N} g_i(x) \cdot E_i(x)$$
 
 其中：
-- $E_i$是第i个专家网络
-- $g_i(x)$是门控网络的输出，决定专家的权重
+- $E_i$ 是第i个专家网络
+- $g_i(x)$ 是门控网络的输出，决定专家的权重
 - N是专家总数
 
 **稀疏性约束**：
@@ -241,21 +241,21 @@ $$g(x) = \text{Softmax}(W_g \cdot x)$$
 **专家选择路由**：
 每个专家选择它最擅长的token：
 $$S_{ij} = \langle x_i, w_j \rangle$$
-其中$w_j$是专家j的特征向量。
+其中 $w_j$ 是专家j的特征向量。
 
 **负载均衡机制**：
 
 1. **辅助损失**：
    $$L_{\text{aux}} = \alpha \cdot N \cdot \sum_{i=1}^{N} f_i \cdot P_i$$
    
-   其中$f_i$是专家i的负载比例，$P_i$是路由概率。
+   其中 $f_i$ 是专家i的负载比例， $P_i$ 是路由概率。
 
 2. **容量限制**：
    $$\text{capacity}_i = \frac{\text{total\_tokens} \cdot \text{capacity\_factor}}{N}$$
 
 3. **噪声注入**：
    $$g(x) = \text{Softmax}(W_g \cdot x + \epsilon)$$
-   其中$\epsilon \sim \mathcal{N}(0, \sigma^2)$
+   其中 $\epsilon \sim \mathcal{N}(0, \sigma^2)$
 
 ### 6.2.3 Switch Transformer创新
 
@@ -473,7 +473,7 @@ h_{\text{image}} &= \text{CrossAttn}(q_{\text{image}}, k_{\text{text}}, v_{\text
 **对比学习框架**：
 $$L_{\text{contrastive}} = -\log \frac{\exp(sim(t_i, v_i)/\tau)}{\sum_j \exp(sim(t_i, v_j)/\tau)}$$
 
-其中$t_i$和$v_i$分别是配对的文本和视觉表示。
+其中 $t_i$ 和 $v_i$ 分别是配对的文本和视觉表示。
 
 **对齐目标**：
 1. **模态内一致性**：相似内容的表示应该接近
@@ -552,7 +552,7 @@ optimizer.step()
 **数据采样策略**：
 $$P(\text{modality}) = \frac{N_{\text{modality}}^{\alpha}}{\sum_m N_m^{\alpha}}$$
 
-其中$\alpha$控制采样的均衡程度。
+其中 $\alpha$ 控制采样的均衡程度。
 
 ### 练习 6.3
 
@@ -595,7 +595,7 @@ $$P(\text{modality}) = \frac{N_{\text{modality}}^{\alpha}}{\sum_m N_m^{\alpha}}$
    跨模态注意力：
    $$\text{CrossModalAttn}(Q_a, K_b, V_b) = \text{Softmax}(\frac{Q_a W_q (K_b W_k)^T}{\sqrt{d}} + B_{a,b})V_b W_v$$
    
-   其中$B_{a,b}$是模态相关的偏置。
+   其中 $B_{a,b}$ 是模态相关的偏置。
    
    动态处理：
    - 图像：自适应池化到固定patch数
@@ -693,9 +693,9 @@ $$P(\text{modality}) = \frac{N_{\text{modality}}^{\alpha}}{\sum_m N_m^{\alpha}}$
 Flash Attention通过重新设计注意力计算的内存访问模式，大幅减少了HBM（高带宽内存）访问。
 
 **传统注意力的内存瓶颈**：
-1. 计算$S = QK^T$：需要存储O(n²)的中间结果
-2. 计算$P = \text{softmax}(S)$：再次读写O(n²)数据
-3. 计算$O = PV$：第三次访问O(n²)数据
+1. 计算 $S = QK^T$ ：需要存储O(n²)的中间结果
+2. 计算 $P = \text{softmax}(S)$ ：再次读写O(n²)数据
+3. 计算 $O = PV$ ：第三次访问O(n²)数据
 
 **Flash Attention的解决方案**：
 - 分块计算（Tiling）：将矩阵分成小块在SRAM中处理
@@ -1441,7 +1441,7 @@ $$f(\alpha) \sim \mathcal{GP}(\mu(\alpha), k(\alpha, \alpha'))$$
    性能预测器：
    $$P(\alpha) = w^T \phi(\alpha) + b$$
    
-   其中$\phi(\alpha)$是架构的特征向量。
+   其中 $\phi(\alpha)$ 是架构的特征向量。
    
    早停策略：
    - 训练100步评估趋势

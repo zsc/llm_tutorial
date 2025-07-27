@@ -19,13 +19,13 @@
 
 **量化函数定义**：
 
-对于输入$x \in \mathbb{R}$，量化函数$Q$将其映射到离散集合：
+对于输入 $x \in \mathbb{R}$ ，量化函数 $Q$ 将其映射到离散集合：
 
 $$Q(x) = s \cdot \text{clamp}(\text{round}(\frac{x}{s}), q_{min}, q_{max})$$
 
 其中：
-- $s$是缩放因子（scale）
-- $q_{min}, q_{max}$是量化范围
+- $s$ 是缩放因子（scale）
+- $q_{min}, q_{max}$ 是量化范围
 - round是取整函数
 
 **量化误差分析**：
@@ -51,7 +51,7 @@ $$\text{SNR} = 10\log_{10}\left(\frac{\mathbb{E}[x^2]}{\mathbb{E}[e^2]}\right)$$
 2. **非对称量化**：
    $$Q(x) = s \cdot (\text{clamp}(\text{round}(\frac{x}{s} + z), 0, 2^b-1) - z)$$
    
-   其中$z$是零点（zero point），适合激活量化。
+   其中 $z$ 是零点（zero point），适合激活量化。
 
 **均匀vs非均匀量化**：
 
@@ -91,7 +91,7 @@ $$\frac{\partial L}{\partial s} = \frac{\partial L}{\partial \hat{w}} \cdot \fra
    在代表性数据上运行，收集激活分布。
 
 2. **确定量化参数**：
-   - MinMax：$s = \frac{\max(x) - \min(x)}{2^b - 1}$
+   - MinMax： $s = \frac{\max(x) - \min(x)}{2^b - 1}$
    - Percentile：去除异常值
    - KL散度：最小化量化前后分布差异
 
@@ -99,7 +99,7 @@ $$\frac{\partial L}{\partial s} = \frac{\partial L}{\partial \hat{w}} \cdot \fra
 
 $$\min_{\theta_q} ||W \cdot X - Q(W; \theta_q) \cdot X||_F^2$$
 
-其中$\theta_q$是量化参数。
+其中 $\theta_q$ 是量化参数。
 
 ### 9.1.5 混合精度量化
 
@@ -269,7 +269,7 @@ $$\text{Compression Ratio} = \frac{1}{1 - \text{Sparsity}}$$
 3. **基于Hessian**：
    $$\text{Importance}(w) = \frac{1}{2}w^2 H_{ii}$$
    
-   其中$H_{ii}$是Hessian对角元素。
+   其中 $H_{ii}$ 是Hessian对角元素。
 
 ### 9.2.2 非结构化剪枝
 
@@ -296,7 +296,7 @@ $$\text{Compression Ratio} = \frac{1}{1 - \text{Sparsity}}$$
 
 $$\text{Mask}_t = \text{TopK}(|W_t|, (1-s) \cdot N)$$
 
-其中$s$是目标稀疏度。
+其中 $s$ 是目标稀疏度。
 
 ### 9.2.3 结构化剪枝
 
@@ -306,7 +306,7 @@ $$\text{Mask}_t = \text{TopK}(|W_t|, (1-s) \cdot N)$$
 
 $$Y = \sum_{c \in \mathcal{C}} W_c * X_c$$
 
-其中$\mathcal{C}$是保留的通道集合。
+其中 $\mathcal{C}$ 是保留的通道集合。
 
 **评估指标**：
 
@@ -348,7 +348,7 @@ $$R = \alpha \cdot \text{Accuracy} - \beta \cdot \text{FLOPs}$$
 
 $$W_{effective} = W \odot \sigma(\alpha)$$
 
-其中$\alpha$是可学习参数，$\sigma$是sigmoid函数。
+其中 $\alpha$ 是可学习参数， $\sigma$ 是sigmoid函数。
 
 **进化算法**：
 
@@ -523,9 +523,9 @@ $$L_{total} = L_{task} + \lambda \sum_g ||W_g||_2$$
 $$L_{KD} = \alpha L_{CE}(y, p_s) + (1-\alpha) L_{KL}(p_t^T, p_s^T)$$
 
 其中：
-- $p_s$：学生模型输出
-- $p_t$：教师模型输出
-- $T$：温度参数
+- $p_s$ ：学生模型输出
+- $p_t$ ：教师模型输出
+- $T$ ：温度参数
 - $p^T = \text{softmax}(z/T)$
 
 **温度的作用**：
@@ -534,7 +534,7 @@ $$L_{KD} = \alpha L_{CE}(y, p_s) + (1-\alpha) L_{KL}(p_t^T, p_s^T)$$
 
 $$p_i^T = \frac{\exp(z_i/T)}{\sum_j \exp(z_j/T)}$$
 
-当$T \to \infty$，分布趋于均匀；当$T \to 0$，退化为one-hot。
+当 $T \to \infty$ ，分布趋于均匀；当 $T \to 0$ ，退化为one-hot。
 
 ### 9.3.2 特征蒸馏
 
@@ -544,7 +544,7 @@ $$p_i^T = \frac{\exp(z_i/T)}{\sum_j \exp(z_j/T)}$$
 
 $$L_{feature} = \sum_{l} \lambda_l ||\phi(F_s^l) - F_t^l||_2^2$$
 
-其中$\phi$是特征变换函数（如1x1卷积）。
+其中 $\phi$ 是特征变换函数（如1x1卷积）。
 
 **注意力迁移**：
 
@@ -558,7 +558,7 @@ $$L_{AT} = \sum_{l} ||\frac{Q_s^l K_s^{lT}}{\sqrt{d}} - \frac{Q_t^l K_t^{lT}}{\s
 
 $$L_{manifold} = ||G_s - G_t||_F^2$$
 
-其中$G_{ij} = \text{sim}(f_i, f_j)$是特征相似度矩阵。
+其中 $G_{ij} = \text{sim}(f_i, f_j)$ 是特征相似度矩阵。
 
 ### 9.3.3 关系型知识蒸馏
 
@@ -568,9 +568,9 @@ $$L_{manifold} = ||G_s - G_t||_F^2$$
 
 $$L_{RKD} = ||\psi(t_i, t_j) - \psi(s_i, s_j)||^2$$
 
-关系函数$\psi$可以是：
-- 距离：$||f_i - f_j||_2$
-- 角度：$\cos(f_i, f_j)$
+关系函数 $\psi$ 可以是：
+- 距离： $||f_i - f_j||_2$
+- 角度： $\cos(f_i, f_j)$
 - 高阶：多个样本的关系
 
 **结构化知识**：
@@ -579,7 +579,7 @@ $$L_{RKD} = ||\psi(t_i, t_j) - \psi(s_i, s_j)||^2$$
 
 $$L_{struct} = ||S_t - S_s||_F^2$$
 
-其中$S$是相似度矩阵或其他结构表示。
+其中 $S$ 是相似度矩阵或其他结构表示。
 
 ### 9.3.4 自蒸馏与相互学习
 
@@ -589,7 +589,7 @@ $$L_{struct} = ||S_t - S_s||_F^2$$
 
 $$p_{teacher} = \frac{1}{K}\sum_{k=1}^K p_{\theta_k}$$
 
-其中$\theta_k$是不同checkpoint或dropout采样。
+其中 $\theta_k$ 是不同checkpoint或dropout采样。
 
 **深度相互学习（DML）**：
 
@@ -783,14 +783,14 @@ $$L_{seq} = -\sum_t \sum_v p_t^{teacher}(v) \log p_t^{student}(v)$$
 
 **奇异值分解（SVD）**：
 
-对权重矩阵$W \in \mathbb{R}^{m \times n}$：
+对权重矩阵 $W \in \mathbb{R}^{m \times n}$ ：
 
 $$W = U\Sigma V^T$$
 
 低秩近似：
 $$W \approx U_r\Sigma_r V_r^T$$
 
-其中$r < \min(m, n)$是秩。
+其中 $r < \min(m, n)$ 是秩。
 
 压缩率：
 $$\text{Compression} = \frac{mn}{r(m + n + 1)}$$
@@ -800,7 +800,7 @@ $$\text{Compression} = \frac{mn}{r(m + n + 1)}$$
 Eckart-Young定理：
 $$||W - W_r||_F = \sqrt{\sum_{i=r+1}^{\min(m,n)} \sigma_i^2}$$
 
-选择$r$使得保留能量比例：
+选择 $r$ 使得保留能量比例：
 $$\frac{\sum_{i=1}^r \sigma_i^2}{\sum_{i=1}^{\min(m,n)} \sigma_i^2} \geq \theta$$
 
 ### 9.4.2 张量分解
@@ -815,7 +815,7 @@ $$\mathcal{T} = \sum_{r=1}^R a_r \otimes b_r \otimes c_r$$
 
 $$\mathcal{T} = \mathcal{G} \times_1 A \times_2 B \times_3 C$$
 
-其中$\mathcal{G}$是核心张量。
+其中 $\mathcal{G}$ 是核心张量。
 
 **张量链（Tensor-Train）分解**：
 
@@ -834,17 +834,17 @@ w_1 & w_0 & \cdots & w_2 \\
 w_{n-1} & w_{n-2} & \cdots & w_0
 \end{bmatrix}$$
 
-只需存储$n$个参数，计算可用FFT加速。
+只需存储 $n$ 个参数，计算可用FFT加速。
 
 **Toeplitz矩阵**：
 
-对角线元素相同，存储$2n-1$个参数。
+对角线元素相同，存储 $2n-1$ 个参数。
 
 **低位移秩矩阵**：
 
 $$W = D + UV^T$$
 
-其中$D$是对角矩阵，$U, V \in \mathbb{R}^{n \times r}$。
+其中 $D$ 是对角矩阵， $U, V \in \mathbb{R}^{n \times r}$ 。
 
 ### 9.4.4 自适应低秩分解
 
@@ -869,14 +869,14 @@ r_{t-1} - 1 & \text{if accuracy stable}
 
 $$W = U\text{diag}(\alpha)\Sigma V^T$$
 
-其中$\alpha$是可学习的门控。
+其中 $\alpha$ 是可学习的门控。
 
 ### 9.4.5 分解与微调
 
 **固定分解微调**：
 
 1. 对预训练模型进行SVD
-2. 固定$U, V$，只微调$\Sigma$
+2. 固定 $U, V$ ，只微调 $\Sigma$
 3. 或固定主要成分，微调残差
 
 **联合优化**：
@@ -903,7 +903,7 @@ for epoch in training:
 1. **注意力分解**：
    $$\text{Attention} = \text{Softmax}(QK^T)V$$
    
-   分解$W_Q, W_K, W_V$矩阵。
+   分解 $W_Q, W_K, W_V$ 矩阵。
 
 2. **FFN压缩**：
    $$\text{FFN}(x) = W_2\text{ReLU}(W_1x)$$
@@ -913,7 +913,7 @@ for epoch in training:
 **卷积分解**：
 
 1. **空间分解**：
-   $k \times k$卷积 → $k \times 1$ + $1 \times k$
+   $k \times k$ 卷积 → $k \times 1$ + $1 \times k$
 
 2. **通道分解**：
    标准卷积 → depthwise + pointwise
@@ -1061,7 +1061,7 @@ for epoch in training:
 
 $$\text{Channels} = \{0.25C, 0.5C, 0.75C, C\}$$
 
-其中$C$是原始通道数。
+其中 $C$ 是原始通道数。
 
 **深度搜索**：
 
@@ -1085,7 +1085,7 @@ $$f(x) = f_L \circ ... \circ f_l \circ ... \circ f_1(x)$$
 
 $$\min_{\alpha} \lambda_1 \cdot \text{Error}(\alpha) + \lambda_2 \cdot \text{Latency}(\alpha) + \lambda_3 \cdot \text{Energy}(\alpha)$$
 
-其中$\alpha$是架构参数。
+其中 $\alpha$ 是架构参数。
 
 **Pareto前沿**：
 
@@ -1135,7 +1135,7 @@ $$\mathcal{O}_t = \{o \in \mathcal{O} : \alpha_o > \theta_t\}$$
 
 $$\text{Fitness} = \frac{\text{Accuracy}}{(\text{FLOPs})^\beta}$$
 
-$\beta$控制效率权重。
+$\beta$ 控制效率权重。
 
 **进化操作**：
 

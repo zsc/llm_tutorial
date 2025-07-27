@@ -22,19 +22,19 @@
 **状态、动作、奖励的定义：**
 
 在语言生成任务中：
-- **状态（State）** $s_t$：已生成的token序列 $[x_1, x_2, ..., x_t]$
-- **动作（Action）** $a_t$：下一个要生成的token
-- **策略（Policy）** $\pi_\theta$：语言模型本身，$P(a_t|s_t)$
-- **奖励（Reward）** $r$：通常只在序列结束时给出
+- **状态（State）** $s_t$ ：已生成的token序列 $[x_1, x_2, ..., x_t]$
+- **动作（Action）** $a_t$ ：下一个要生成的token
+- **策略（Policy）** $\pi_\theta$ ：语言模型本身， $P(a_t|s_t)$
+- **奖励（Reward）** $r$ ：通常只在序列结束时给出
 
 **马尔可夫决策过程（MDP）：**
 
 在语言模型中，MDP可以形式化为：
-- 状态空间 $\mathcal{S}$：所有可能的token序列
-- 动作空间 $\mathcal{A}$：词表中的所有token
-- 转移函数 $P(s_{t+1}|s_t, a_t)$：确定性的，将token追加到序列
-- 奖励函数 $R(s_t, a_t)$：通常延迟到序列结束时给出
-- 折扣因子 $\gamma$：通常设为1（无折扣的episode任务）
+- 状态空间 $\mathcal{S}$ ：所有可能的token序列
+- 动作空间 $\mathcal{A}$ ：词表中的所有token
+- 转移函数 $P(s_{t+1}|s_t, a_t)$ ：确定性的，将token追加到序列
+- 奖励函数 $R(s_t, a_t)$ ：通常延迟到序列结束时给出
+- 折扣因子 $\gamma$ ：通常设为1（无折扣的episode任务）
 
 ### 4.1.2 策略梯度定理
 
@@ -51,10 +51,10 @@ $$\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\left[\sum_{t=0}^T 
 **REINFORCE算法实现：**
 
 REINFORCE算法的核心步骤：
-1. 采样轨迹：$\tau \sim \pi_\theta$
-2. 计算回报：$G_t = \sum_{k=t}^T \gamma^{k-t} r_k$
-3. 估计梯度：$\nabla_\theta J \approx \frac{1}{N} \sum_i \sum_t \nabla_\theta \log \pi_\theta(a_t^i|s_t^i) \cdot G_t^i$
-4. 更新参数：$\theta \leftarrow \theta + \alpha \nabla_\theta J$
+1. 采样轨迹： $\tau \sim \pi_\theta$
+2. 计算回报： $G_t = \sum_{k=t}^T \gamma^{k-t} r_k$
+3. 估计梯度： $\nabla_\theta J \approx \frac{1}{N} \sum_i \sum_t \nabla_\theta \log \pi_\theta(a_t^i|s_t^i) \cdot G_t^i$
+4. 更新参数： $\theta \leftarrow \theta + \alpha \nabla_\theta J$
 
 关键的PyTorch函数：
 - `torch.distributions.Categorical`：采样动作
@@ -79,8 +79,8 @@ $$A_t^{GAE} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l}$$
 其中 $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$ 是TD误差。
 
 GAE通过参数 $\lambda$ 在偏差和方差之间权衡：
-- $\lambda = 0$：退化为TD(0)，低方差但高偏差
-- $\lambda = 1$：退化为蒙特卡洛估计，无偏但高方差
+- $\lambda = 0$ ：退化为TD(0)，低方差但高偏差
+- $\lambda = 1$ ：退化为蒙特卡洛估计，无偏但高方差
 
 ### 4.1.4 重要性采样与PPO
 
@@ -96,14 +96,14 @@ PPO的完整损失函数包含三个部分：
 $$L^{PPO}(\theta) = L^{CLIP}(\theta) - c_1 L^{VF}(\theta) + c_2 S[\pi_\theta]$$
 
 其中：
-- $L^{CLIP}$：裁剪的策略损失
-- $L^{VF}$：价值函数损失
-- $S[\pi_\theta]$：熵奖励，鼓励探索
+- $L^{CLIP}$ ：裁剪的策略损失
+- $L^{VF}$ ：价值函数损失
+- $S[\pi_\theta]$ ：熵奖励，鼓励探索
 
 关键超参数：
-- $\epsilon$：裁剪范围（通常0.1-0.2）
-- $c_1$：价值损失系数（通常0.5）
-- $c_2$：熵系数（通常0.01）
+- $\epsilon$ ：裁剪范围（通常0.1-0.2）
+- $c_1$ ：价值损失系数（通常0.5）
+- $c_2$ ：熵系数（通常0.01）
 
 ### 4.1.5 KL散度约束
 
@@ -133,12 +133,12 @@ $$L(\theta) = \mathbb{E}_t[r_t(\theta)A_t] - \beta \cdot KL[\pi_\theta || \pi_{r
 
 3. **优势计算**：
    - 使用价值网络预测 $V(s_t)$
-   - 计算TD误差：$\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$
-   - 计算GAE优势：$A_t = \sum_{l=0}^{T-t} (\gamma\lambda)^l \delta_{t+l}$
+   - 计算TD误差： $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$
+   - 计算GAE优势： $A_t = \sum_{l=0}^{T-t} (\gamma\lambda)^l \delta_{t+l}$
 
 4. **PPO更新**（多个epoch）：
-   - 计算重要性比率：$r_t = \pi_\theta(a_t|s_t) / \pi_{\theta_{old}}(a_t|s_t)$
-   - 计算裁剪损失：$L^{CLIP} = -\min(r_t A_t, \text{clip}(r_t, 1-\epsilon, 1+\epsilon) A_t)$
+   - 计算重要性比率： $r_t = \pi_\theta(a_t|s_t) / \pi_{\theta_{old}}(a_t|s_t)$
+   - 计算裁剪损失： $L^{CLIP} = -\min(r_t A_t, \text{clip}(r_t, 1-\epsilon, 1+\epsilon) A_t)$
    - 更新策略和价值网络
 
 5. **KL监控**：
@@ -261,8 +261,8 @@ graph LR
 **偏好数据的类型：**
 
 **1. 成对比较：**
-给定prompt $x$ 和两个响应 $y_1, y_2$，标注者选择偏好的响应：
-- 二元选择：$y_1 \succ y_2$ 或 $y_2 \succ y_1$
+给定prompt $x$ 和两个响应 $y_1, y_2$ ，标注者选择偏好的响应：
+- 二元选择： $y_1 \succ y_2$ 或 $y_2 \succ y_1$
 - 包含平局：增加"同样好"选项
 - 带置信度：1-5分的偏好强度
 
@@ -310,7 +310,7 @@ $$y_{\sigma(1)} \succ y_{\sigma(2)} \succ ... \succ y_{\sigma(k)}$$
 基于Bradley-Terry模型的排序损失：
 $$L_{RM} = -\mathbb{E}_{(x,y_w,y_l) \sim D}\left[\log \sigma(r_\theta(x,y_w) - r_\theta(x,y_l))\right]$$
 
-其中 $y_w$ 是偏好的响应，$y_l$ 是不偏好的响应。
+其中 $y_w$ 是偏好的响应， $y_l$ 是不偏好的响应。
 
 **训练技巧**：
 - 奖励归一化防止数值不稳定
@@ -323,8 +323,8 @@ $$L_{RM} = -\mathbb{E}_{(x,y_w,y_l) \sim D}\left[\log \sigma(r_\theta(x,y_w) - r
 
 1. **初始化**：
    - 策略模型：SFT后的语言模型 $\pi_\theta$
-   - 参考模型：SFT模型的副本 $\pi_{ref}$（冻结）
-   - 奖励模型：训练好的 $r_\phi$（冻结）
+   - 参考模型：SFT模型的副本 $\pi_{ref}$ （冻结）
+   - 奖励模型：训练好的 $r_\phi$ （冻结）
    - 价值模型：随机初始化的 $V_\psi$
 
 2. **训练循环**：
@@ -339,7 +339,7 @@ $$L_{RM} = -\mathbb{E}_{(x,y_w,y_l) \sim D}\left[\log \sigma(r_\theta(x,y_w) - r
    ```
 
 3. **关键超参数**：
-   - KL系数 $\beta$：通常0.01-0.1
+   - KL系数 $\beta$ ：通常0.01-0.1
    - PPO clip范围：0.1-0.2
    - 训练步数：通常几千步
    - 批次大小：受限于生成成本
@@ -438,7 +438,7 @@ $$L_{RM} = -\mathbb{E}_{(x,y_w,y_l) \sim D}\left[\log \sigma(r_\theta(x,y_w) - r
 人类偏好可以建模为：
 $$P(y_1 \succ y_2 | x) = \frac{\exp(r(x, y_1))}{\exp(r(x, y_1)) + \exp(r(x, y_2))} = \sigma(r(x, y_1) - r(x, y_2))$$
 
-其中 $r(x, y)$ 是奖励函数，$\sigma$ 是sigmoid函数。
+其中 $r(x, y)$ 是奖励函数， $\sigma$ 是sigmoid函数。
 
 **Plackett-Luce模型（多选项排序）：**
 $$P(\tau | x) = \prod_{i=1}^{K-1} \frac{\exp(r(x, y_{\tau(i)}))}{\sum_{j=i}^{K} \exp(r(x, y_{\tau(j)}))}$$
@@ -581,8 +581,8 @@ $$L_{total} = \lambda_1 L_{helpful} + \lambda_2 L_{safe} + \lambda_3 L_{truthful
 1. **集成策略设计**：
    - **模型多样性**：不同架构、初始化、训练数据子集
    - **聚合方法**：
-     - 平均：$r_{ensemble} = \frac{1}{N}\sum_{i=1}^N r_i(x,y)$
-     - 加权平均：$r_{ensemble} = \sum_{i=1}^N w_i \cdot r_i(x,y)$
+     - 平均： $r_{ensemble} = \frac{1}{N}\sum_{i=1}^N r_i(x,y)$
+     - 加权平均： $r_{ensemble} = \sum_{i=1}^N w_i \cdot r_i(x,y)$
      - 中位数：鲁棒性更好
    - **投票机制**：用于分类形式的偏好预测
 
@@ -594,7 +594,7 @@ $$L_{total} = \lambda_1 L_{helpful} + \lambda_2 L_{safe} + \lambda_3 L_{truthful
    - **应用**：识别需要更多标注的样本
 
 3. **动态权重调整**：
-   - 基于验证集性能：$w_i \propto \exp(\alpha \cdot \text{acc}_i)$
+   - 基于验证集性能： $w_i \propto \exp(\alpha \cdot \text{acc}_i)$
    - 基于预测一致性：降低离群预测的权重
    - 基于专长领域：不同模型处理不同类型prompt
 
@@ -892,7 +892,7 @@ CAI通过一组明确的原则（constitution）来指导模型的行为，而�
    $$s_i = f_{evaluate}(x, y_i, \text{Constitution})$$
 
 3. **构造偏好对**：
-   选择分数差异显著的对：$(y_i, y_j)$ where $s_i > s_j + \epsilon$
+   选择分数差异显著的对： $(y_i, y_j)$ where $s_i > s_j + \epsilon$
 
 **RLAIF训练流程：**
 
