@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>LLM tutorial 项目说明</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">大型语言模型(LLM)设计与实现教程</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第1章: Transformer架构深度剖析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第2章: GPT预训练原理与设计选择</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第3章：微调技术与对齐方法</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第4章：强化学习与RLHF深度解析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第5章：长思维链与推理能力培养</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第6章：最新架构创新</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第7章：数据工程：预训练、后训练与合成数据</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第8章：训练基础设施I：无损加速技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第9章：训练基础设施II：有损压缩与量化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter10.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第10章：推理优化与系统设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第11章：可解释AI与模型内部机制</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第12章：评测基准与实际应用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">LLM tutorial 项目说明</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="README.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">语言模型全面教程</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <p>（交流可以用英文，本文档中文，保留这句）</p>
+<h1 id="llm-tutorial">LLM tutorial 项目说明</h1>
+<h2 id="_1">项目目标</h2>
+<p>编写一份LLM 模型设计和训练推理设计的全面教程markdown，要包含大量的习题和参考答案（答案默认折叠）。合适时提及相关 pytorch 函数名但不写代码。
+项目特色是，包含大量的可继续研究的线索。</p>
+<p><strong>重要提醒</strong>：不要在教程中包含任何代码块！只描述概念、算法步骤和提及相关的PyTorch函数名。</p>
+<h2 id="_2">工具说明</h2>
+<p>当需要时，可以通过 <code>gemini -p "深入回答：&lt;要问的问题&gt; -m gemini-2.5-pro"</code> 来获取 gemini-2.5-pro 的参考意见(gemini 系只问 gemini-2.5-pro 不问别人)
+当需要时，可以通过 `echo "&lt;要问的问题&gt;"|llm -m 4.1 来获取 gpt-4.1 的参考意见</p>
+<h2 id="_3">教程大纲</h2>
+<h3 id="_4">最终章节结构</h3>
+<p>文件组织方式为：index.md + chapter1.md + chapter2.md + ...
+index.md 包含指向各章节的 link</p>
+<h3 id="_5">内容设计原则</h3>
+<ol start="3">
+<li>
+<p><strong>交互元素</strong>：
+   - 保持简单，先用静态图像
+   - 逐步增加交互性</p>
+</li>
+<li>
+<p><strong>章节依赖性</strong>：
+   - 每章尽量自包含</p>
+</li>
+<li>
+<p><strong>练习设计</strong>：
+   - 理论和实现混合
+   - 包含挑战题
+   - 难度递进</p>
+</li>
+<li>
+<p><strong>前置知识</strong>：
+   - 假设学生已有概率论、神经网络基础、PyTorch经验
+   - 在首页明确说明这些前置要求</p>
+</li>
+</ol>
+<h2 id="_6">章节格式要求</h2>
+<p>每个章节应包含：</p>
+<ol>
+<li><strong>开篇段落</strong> - 引入本章主题，说明学习目标</li>
+<li><strong>丰富的文字描述</strong> - 不仅是公式，要有充分的文字解释和直观说明</li>
+<li><strong>本章小结</strong> - 总结要点，预告下一章内容</li>
+</ol>
+<h2 id="_7">输出大小控制</h2>
+<p><strong>重要原则</strong>：</p>
+<ul>
+<li>输入可以是章节级别的请求（如"创建第2章"）</li>
+<li>但输出必须限制在一个子小节（subsection）的大小，不超过</li>
+<li>这样确保每次生成的内容精炼且高质量</li>
+</ul>
+<h3 id="_8">统一样式要求</h3>
+<ol start="2">
+<li><strong>练习答案默认折叠</strong> - 使用统一的折叠/展开机制</li>
+</ol>
+<h1 id="important-instruction-reminders">important-instruction-reminders</h1>
+<p>Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.</p>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter12.html" class="nav-link prev">← 第12章：评测基准与实际应用</a><a href="README.html" class="nav-link next">语言模型全面教程 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

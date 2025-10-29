@@ -1,0 +1,2328 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第2章: GPT预训练原理与设计选择</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">大型语言模型(LLM)设计与实现教程</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第1章: Transformer架构深度剖析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第2章: GPT预训练原理与设计选择</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第3章：微调技术与对齐方法</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第4章：强化学习与RLHF深度解析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第5章：长思维链与推理能力培养</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第6章：最新架构创新</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第7章：数据工程：预训练、后训练与合成数据</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第8章：训练基础设施I：无损加速技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第9章：训练基础设施II：有损压缩与量化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter10.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第10章：推理优化与系统设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第11章：可解释AI与模型内部机制</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第12章：评测基准与实际应用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">LLM tutorial 项目说明</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="README.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">语言模型全面教程</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="2-gpt">第2章: GPT预训练原理与设计选择</h1>
+<p>GPT（Generative Pre-trained Transformer）开创了大规模无监督预训练的新范式。本章深入探讨GPT的核心思想——自回归语言建模，以及围绕预训练的各种设计选择。我们将理解为什么这种看似简单的方法能够产生如此强大的模型。</p>
+<h2 id="_1">本章内容</h2>
+<ol>
+<li><a href="#section1">自回归语言建模的数学基础</a> - 概率分解与最大似然估计</li>
+<li><a href="#section2">预训练目标的设计与比较</a> - 为什么选择下一词预测？</li>
+<li><a href="#section3">数据准备与预处理</a> - 从原始文本到训练样本</li>
+<li><a href="#section4">训练动力学与优化策略</a> - 大规模训练的实践智慧</li>
+<li><a href="#section5">模型规模与计算效率</a> - Scaling Laws与效率权衡</li>
+<li><a href="#section6">评估与分析</a> - 如何衡量预训练质量</li>
+</ol>
+<hr />
+<h2 id="21"><a name="section1"></a>2.1 自回归语言建模的数学基础</h2>
+<p>自回归语言建模是GPT成功的核心。让我们从概率论的角度深入理解这个简单而强大的想法。</p>
+<h3 id="211">2.1.1 语言的概率模型</h3>
+<p>给定一个文本序列 $x = (x_1, x_2, ..., x_n)$ ，语言模型的目标是学习概率分布 $P(x)$ 。通过链式法则，我们可以分解为：</p>
+<p>$$P(x) = P(x_1) \cdot P(x_2|x_1) \cdot P(x_3|x_1, x_2) \cdots P(x_n|x_1, ..., x_{n-1})$$
+更紧凑地写作：
+$$P(x) = \prod_{i=1}^{n} P(x_i|x_{&lt;i})$$
+其中 $x_{&lt;i} = (x_1, ..., x_{i-1})$ 表示位置 $i$ 之前的所有token。</p>
+<p><strong>与统计机器翻译（SMT）的联系：</strong>
+这个概率分解确实与SMT中的n-gram语言模型在形式上完全一致。区别在于：</p>
+<ul>
+<li><strong>SMT</strong>: 通常使用n-gram（如3-gram、5-gram），只看固定长度的历史</li>
+<li><strong>GPT</strong>: 使用Transformer编码整个历史 $x_{&lt;i}$ ，理论上可以利用任意长的上下文</li>
+<li><strong>参数化</strong>: SMT直接存储n-gram概率表，GPT通过神经网络参数化条件分布</li>
+<li><strong>泛化能力</strong>: GPT可以对未见过的上下文组合给出合理概率，而n-gram模型需要回退策略</li>
+</ul>
+<h3 id="212">2.1.2 最大似然估计</h3>
+<p>给定数据集 $\mathcal{D} = \{x^{(1)}, x^{(2)}, ..., x^{(N)}\}$ ，我们通过最大似然估计学习模型参数 $\theta$ ：
+$$\theta^* = \arg\max_{\theta} \prod_{x \in \mathcal{D}} P_{\theta}(x)$$
+取对数后：
+$$\theta^* = \arg\max_{\theta} \sum_{x \in \mathcal{D}} \log P_{\theta}(x)$$
+代入自回归分解：
+$$\theta^* = \arg\max_{\theta} \sum_{x \in \mathcal{D}} \sum_{i=1}^{|x|} \log P_{\theta}(x_i|x_{&lt;i})$$
+这正是GPT的训练目标——预测下一个token。</p>
+<h3 id="213">2.1.3 为什么自回归？</h3>
+<p>自回归建模看似简单——仅仅预测下一个词，却成为了现代语言模型的主流范式。这个选择背后有深刻的理论和实践考量。</p>
+<p><strong>核心优势的深入分析：</strong></p>
+<ol>
+<li>
+<p><strong>通用性：任意文本分布的逼近器</strong>
+   - 根据通用逼近定理，自回归模型可以以任意精度逼近任何文本分布
+   - 不需要对语言结构做强假设（如句法树、语义角色）
+   - 从诗歌到代码，从对话到论文，一个模型搞定所有文本类型
+   - 这种通用性是GPT能够展现多样化能力的理论基础</p>
+</li>
+<li>
+<p><strong>简单性：优雅的数学形式</strong>
+   - 训练目标就是交叉熵损失，无需复杂的目标函数设计
+   - 只需要一个预测头：词表大小的线性层 + softmax
+   - 梯度计算直接，优化稳定，易于调试
+   - 相比之下，GANs需要平衡生成器和判别器，VAEs需要设计合适的先验</p>
+</li>
+<li>
+<p><strong>生成能力：从理解到创造</strong>
+   - 训练和推理的一致性：怎么训练就怎么用
+   - 支持各种生成任务：续写、翻译、问答、代码生成
+   - 可以通过prompt工程引导生成方向
+   - 生成过程可解释：每一步都有明确的概率分布</p>
+</li>
+<li>
+<p><strong>自监督学习：数据效率的革命</strong>
+   - 每个token都是一个训练样本，一个1000词的文档提供999个训练样例
+   - 无需人工标注，互联网就是训练集
+   - 数据的多样性自然带来能力的多样性
+   - 规模效应：更多数据直接转化为更好性能</p>
+</li>
+</ol>
+<p><strong>与其他建模范式的深度对比：</strong></p>
+<p><strong>BERT（掩码语言模型）的权衡：</strong></p>
+<ul>
+<li><strong>优势</strong>：双向上下文，更好的理解能力，在分类任务上表现优异</li>
+<li><strong>劣势</strong>：</li>
+<li>无法直接生成：需要复杂的采样策略<ul>
+<li>方法1：迭代解码 - 逐步填充[MASK]，每次选择置信度最高的位置</li>
+<li>方法2：并行采样 - 同时预测所有[MASK]，但忽略了token间依赖</li>
+<li>方法3：自回归化 - 将BERT改造为从左到右生成，但失去了双向优势</li>
+<li>前两种方法要么慢（迭代多轮），要么质量差（忽略依赖）；第三种方法虽然速度相当，但放弃了BERT的核心优势（双向理解），不如直接用GPT</li>
+</ul>
+</li>
+<li>训练-推理不一致：[MASK]标记在实际使用时不存在</li>
+<li>预训练效率低：只有15%的token参与训练（BERT设计中随机选择15%的token进行掩码，其中80%替换为[MASK]，10%替换为随机词，10%保持不变）</li>
+<li><strong>适用场景</strong>：理解任务 &gt; 生成任务</li>
+</ul>
+<p><strong>T5（编码器-解码器）的设计哲学：</strong></p>
+<ul>
+<li><strong>优势</strong>：灵活的输入输出映射，自然支持翻译、摘要等任务</li>
+<li><strong>劣势</strong>：</li>
+<li>架构复杂度翻倍</li>
+<li>需要定义输入输出边界</li>
+<li>对于纯生成任务有冗余</li>
+<li><strong>本质</strong>：用架构复杂度换取任务灵活性</li>
+</ul>
+<p><strong>能量模型（EBMs）的理论优美与实践困境：</strong></p>
+<ul>
+<li><strong>理论优势</strong>：</li>
+<li>可以建模全局约束</li>
+<li>不受限于从左到右的生成顺序</li>
+<li>理论上更强的表达能力</li>
+<li><strong>实践挑战</strong>：</li>
+<li>配分函数难以计算（但score-based方法通过学习 $\nabla_x \log p(x)$ 绕过了这个问题）</li>
+<li>采样需要MCMC，速度慢（尽管Langevin dynamics等方法有所改进）</li>
+<li>训练不稳定，需要对比散度等复杂算法</li>
+<li><strong>最新进展</strong>：</li>
+<li>Score matching和denoising score matching降低了训练难度</li>
+<li>与扩散模型的联系被建立，统一了两个框架</li>
+<li>但在离散文本上的应用仍面临挑战（梯度在离散空间不存在）</li>
+</ul>
+<p><strong>🔬 研究线索：超越自回归的新范式</strong></p>
+<ol>
+<li>
+<p><strong>扩散模型for文本：连续与离散的桥梁</strong>
+   - Diffusion-LM：将离散文本嵌入连续空间进行扩散
+   - 优势：可以全局优化，支持受控生成
+   - 挑战：离散数据的扩散过程设计，解码速度</p>
+</li>
+<li>
+<p><strong>非自回归生成：并行的诱惑</strong>
+   - 一次生成所有token，理论加速比等于序列长度
+   - 迭代精炼：先生成粗糙结果，逐步改进
+   - 关键问题：如何建模token间的依赖关系？</p>
+</li>
+<li>
+<p><strong>混合模型：取长补短</strong>
+   - 自回归骨干 + 非自回归精炼
+   - 局部自回归，全局并行
+   - 任务特定的生成策略</p>
+</li>
+</ol>
+<p><strong>哲学反思：为什么简单的方法往往最有效？</strong></p>
+<p>自回归的成功给我们的启示：</p>
+<ul>
+<li><strong>奥卡姆剃刀</strong>：如无必要，勿增实体</li>
+<li><strong>数据驱动</strong>：让数据说话，而不是注入人类偏见</li>
+<li><strong>可扩展性</strong>：简单方法更容易规模化</li>
+<li><strong>工程友好</strong>：理论优美不如实践可行</li>
+</ul>
+<h3 id="214">2.1.4 条件独立性假设</h3>
+<p>自回归模型做了一个关键假设：
+$$P(x_i|x_{&lt;i}) = P(x_i|f_{\theta}(x_{&lt;i}))$$
+即当前token只依赖于历史的某个表示 $f_{\theta}(x_{&lt;i})$ ，而非原始序列。这是一个信息瓶颈，但Transformer的强大表示能力使其work。</p>
+<h4 id="21_1">练习 2.1：推导困惑度与交叉熵的关系</h4>
+<p>证明语言模型的困惑度(Perplexity)等于 $e^H$ ，其中 $H$ 是交叉熵损失。</p>
+<details markdown="1">
+<summary>查看答案</summary>
+
+<p><strong>推导过程：</strong></p>
+<ol>
+<li>
+<p><strong>困惑度定义：</strong>
+$$\text{PPL} = P(x)^{-1/n} = \left(\prod_{i=1}^{n} P(x_i|x_{&lt;i})\right)^{-1/n}$$</p>
+</li>
+<li>
+<p><strong>取对数：</strong>
+$$\log \text{PPL} = -\frac{1}{n} \sum_{i=1}^{n} \log P(x_i|x_{&lt;i})$$</p>
+</li>
+<li>
+<p><strong>交叉熵定义：</strong>
+$$H = -\frac{1}{n} \sum_{i=1}^{n} \log P_{\theta}(x_i|x_{&lt;i})$$</p>
+</li>
+<li>
+<p><strong>因此：</strong>
+$$\text{PPL} = e^H$$
+<strong>直觉理解：</strong></p>
+</li>
+</ol>
+<ul>
+<li>困惑度衡量模型的"困惑程度"</li>
+<li>PPL=10意味着模型在每一步平均在10个选项中犹豫</li>
+<li>更低的困惑度表示更好的语言建模能力</li>
+</ul>
+</details>
+<h3 id="215">2.1.5 困惑度越低越好吗？</h3>
+<p>虽然我们在练习中已经提到困惑度（PPL）越低表示越好的语言建模能力，但这个"越低越好"需要更细致的理解：</p>
+<p><strong>PPL的合理范围：</strong></p>
+<ul>
+<li><strong>人类水平</strong>：在预测下一个词任务上，人类的PPL约为10-20</li>
+<li><strong>现代LLM</strong>：GPT-3在测试集上PPL约为20，GPT-4更低</li>
+<li><strong>理论下限</strong>：PPL=1意味着完美预测，但自然语言的固有随机性使这不可能</li>
+</ul>
+<p><strong>过低PPL的潜在问题：</strong></p>
+<ol>
+<li><strong>过拟合风险</strong>：训练PPL远低于验证PPL，表示模型记住了训练数据</li>
+<li><strong>多样性丧失</strong>：PPL过低可能意味着模型过于保守，只生成高概率的"安全"文本</li>
+<li><strong>分布不匹配</strong>：在特定领域上PPL很低，但泛化能力差</li>
+</ol>
+<p><strong>PPL与下游任务的关系：</strong></p>
+<ul>
+<li>PPL与生成质量正相关，但不是线性关系</li>
+<li>某些任务（如创意写作）可能不需要最低的PPL</li>
+<li>PPL无法衡量事实准确性、逻辑一致性等高级能力</li>
+</ul>
+<p><strong>🔬 研究发现：</strong></p>
+<ul>
+<li>Scaling laws显示PPL与模型大小呈幂律关系</li>
+<li>但人类评估的质量提升在PPL&lt;30后趋于平缓</li>
+<li>这提示我们需要超越PPL的评估指标</li>
+</ul>
+<h3 id="216">2.1.6 采样与生成</h3>
+<p>训练好的自回归模型可以通过迭代采样生成文本：
+$$x_i \sim P_{\theta}(x_i|x_{&lt;i})$$
+<strong>采样策略：</strong></p>
+<ol>
+<li><strong>贪婪解码</strong>： $x_i = \arg\max P_{\theta}(x_i|x_{&lt;i})$</li>
+<li><strong>温度采样</strong>： $P(x_i) \propto \exp(\log P_{\theta}(x_i|x_{&lt;i})/T)$</li>
+<li><strong>Top-k采样</strong>：只从概率最高的k个token中采样</li>
+<li><strong>核采样(Top-p)</strong>：从累积概率达到p的最小集合中采样</li>
+</ol>
+<p><strong>⚡ 设计选择：</strong> 
+不同的采样策略适合不同场景：</p>
+<ul>
+<li>贪婪：确定性，适合事实性任务</li>
+<li>高温度：创造性，适合故事生成</li>
+<li>Top-p：平衡质量和多样性</li>
+</ul>
+<p><strong>为什么模型训练早期会出现大量重复？</strong></p>
+<p>这是语言模型训练中的普遍现象，背后有深刻的原因：</p>
+<ol>
+<li>
+<p><strong>模式坍缩（Mode Collapse）</strong>：
+   - 早期模型容易陷入"安全"的循环模式
+   - 重复短语（如"the the the"）在局部是高概率的
+   - 模型还未学会长程依赖，无法"记住"已经说过什么</p>
+</li>
+<li>
+<p><strong>训练动力学</strong>：
+   - 初期模型主要学习unigram/bigram统计
+   - 高频模式主导梯度，如"of the"、"in the"
+   - 需要更多训练才能学会语义层面的多样性</p>
+</li>
+<li>
+<p><strong>自增强效应</strong>：
+   - 一旦生成了重复token，后续预测更倾向继续重复
+   - 这在beam search中尤其明显
+   - 解决方案：repetition penalty、diverse beam search</p>
+</li>
+</ol>
+<p><strong>Contrastive Decoding的历史意义</strong></p>
+<p>Contrastive decoding（对比解码）是生成质量提升的重要里程碑：</p>
+<ol>
+<li><strong>核心思想</strong>：
+$$\log p_{\text{contrast}}(x_i|x_{&lt;i}) = \log p_{\text{expert}}(x_i|x_{&lt;i}) - \alpha \log p_{\text{amateur}}(x_i|x_{&lt;i})$$</li>
+</ol>
+<ul>
+<li>用大模型减去小模型的预测</li>
+<li>强调大模型独特的能力</li>
+</ul>
+<ol start="2">
+<li>
+<p><strong>历史意义</strong>：
+   - <strong>首次系统性地利用模型差异</strong>：不只关注单个模型的输出
+   - <strong>质量提升显著</strong>：特别是在事实性和连贯性方面
+   - <strong>启发了后续研究</strong>：如DExperts（专家模型组合）、CAD（上下文感知解码）</p>
+</li>
+<li>
+<p><strong>理论洞察</strong>：
+   - 小模型捕捉表面模式，大模型理解深层语义
+   - 对比可以"减去"通用模式，突出特定知识
+   - 这预示了后来的"涌现能力"概念</p>
+</li>
+<li>
+<p><strong>实践影响</strong>：
+   - 影响了后续的解码策略设计
+   - 启发了训练时的对比学习方法
+   - 为模型能力的分层理解提供了工具</p>
+</li>
+</ol>
+<h3 id="217">2.1.7 理论性质</h3>
+<ol>
+<li>
+<p><strong>表达能力</strong>
+- 理论上，足够大的自回归模型可以拟合任意文本分布
+- 但实践中受限于模型容量和训练数据</p>
+</li>
+<li>
+<p><strong>样本复杂度</strong>
+- 需要多少数据才能学好语言模型？
+- Scaling laws提供了经验答案（见2.5节）</p>
+</li>
+<li>
+<p><strong>泛化界限</strong>
+- 传统PAC学习理论难以解释LLM的泛化
+- 新理论：implicit regularization, neural tangent kernel</p>
+</li>
+</ol>
+<h4 id="22">练习 2.2：分析不同长度序列的建模难度</h4>
+<p>设计实验比较模型在不同长度序列上的表现。预期会看到什么模式？</p>
+<details markdown="1">
+<summary>查看答案</summary>
+
+<p><strong>实验设计：</strong></p>
+<ol>
+<li>
+<p><strong>数据准备：</strong>
+   - 将文本分割为不同长度的片段
+   - 长度范围：10, 50, 100, 500, 1000 tokens
+   - 保持内容领域一致</p>
+</li>
+<li>
+<p><strong>评估指标：</strong>
+   - 每个位置的平均loss
+   - 总体困惑度
+   - 首token vs 末token的预测准确率</p>
+</li>
+<li>
+<p><strong>预期发现：</strong>
+   - <strong>短序列</strong>：困惑度较高（缺乏上下文）
+   - <strong>中等长度</strong>：最优表现
+   - <strong>长序列</strong>：</p>
+<ul>
+<li>开始部分：困惑度高（冷启动）</li>
+<li>中间部分：稳定且较低</li>
+<li>结尾部分：可能上升（注意力稀释）</li>
+</ul>
+</li>
+<li>
+<p><strong>深入分析：</strong>
+   - 不同类型文本的模式差异
+   - 位置编码的影响
+   - 注意力模式随长度的变化</p>
+</li>
+</ol>
+</details>
+<h3 id="218">2.1.8 自回归的局限与改进</h3>
+<p><strong>局限性：</strong></p>
+<ol>
+<li><strong>顺序生成</strong>：不能并行生成，推理慢</li>
+<li><strong>错误累积</strong>：早期错误会传播
+   - 训练时使用teacher forcing（总是用真实token作为输入）
+   - 推理时必须用自己的预测，导致训练-推理不匹配（exposure bias）
+   - 一个错误的预测会影响后续所有生成</li>
+<li><strong>左到右偏置</strong>：可能不是最自然的顺序
+   - 在需要全局视角的任务上吃亏，如解字谜、填字游戏
+   - 后来通过Chain-of-Thought (CoT)部分缓解：将全局推理分解为局部步骤
+   - 但本质上仍是用顺序生成模拟并行思考</li>
+</ol>
+<p><strong>改进方向：</strong></p>
+<ol>
+<li><strong>半自回归</strong>：块级别并行生成</li>
+<li><strong>双向上下文</strong>：如UniLM</li>
+<li><strong>迭代refinement</strong>：生成后再修改</li>
+</ol>
+<p><strong>🔬 研究线索：</strong> </p>
+<ul>
+<li>如何结合自回归和非自回归的优点？</li>
+<li>是否存在更好的factorization顺序？</li>
+<li>如何减轻exposure bias（训练时见真实前缀，推理时见生成前缀）？</li>
+</ul>
+<hr />
+<h2 id="22_1"><a name="section2"></a>2.2 预训练目标的设计与比较</h2>
+<p>虽然GPT选择了"预测下一个token"这个简单目标，但这并非唯一选择。本节比较不同的预训练目标，分析它们的优劣和适用场景。</p>
+<h3 id="221">2.2.1 主流预训练目标一览</h3>
+<ol>
+<li>
+<p><strong>自回归语言建模（GPT）</strong>
+$$\mathcal{L}_{AR} = -\sum_{i=1}^{n} \log P(x_i|x_{&lt;i})$$</p>
+</li>
+<li>
+<p><strong>掩码语言建模（BERT）</strong>
+$$\mathcal{L}_{MLM} = -\sum_{i \in \mathcal{M}} \log P(x_i|x_{\backslash \mathcal{M}})$$
+其中 $\mathcal{M}$ 是被掩码的位置集合。</p>
+</li>
+<li>
+<p><strong>置换语言建模（XLNet）</strong>
+$$\mathcal{L}_{PLM} = -\mathbb{E}_{z \sim \mathcal{Z}_n} \left[\sum_{i=1}^{n} \log P(x_{z_i}|x_{z_{&lt;i}})\right]$$
+其中 $\mathcal{Z}_n$ 是所有可能的排列。</p>
+</li>
+<li>
+<p><strong>去噪自编码（T5, BART）</strong>
+$$\mathcal{L}_{DAE} = -\log P(x|\tilde{x})$$
+其中 $\tilde{x}$ 是加噪的输入。</p>
+</li>
+</ol>
+<h3 id="222-gpt">2.2.2 为什么GPT选择自回归？</h3>
+<p><strong>优势分析：</strong></p>
+<ol>
+<li><strong>统一性</strong>：预训练和生成使用相同的方式</li>
+<li><strong>简单性</strong>：实现直接，无需特殊设计</li>
+<li><strong>数据效率</strong>：每个token都提供监督信号</li>
+<li><strong>因果性</strong>：自然符合时间因果关系</li>
+</ol>
+<p><strong>与MLM的关键区别：</strong></p>
+<ul>
+<li>MLM可以看到双向上下文</li>
+<li>MLM需要特殊的[MASK]标记</li>
+<li>MLM不能直接用于生成</li>
+</ul>
+<h4 id="23">练习 2.3：比较不同预训练目标的数据效率</h4>
+<p>假设有长度为n的序列，计算不同预训练方法每个样本提供的监督信号数量。</p>
+<details markdown="1">
+<summary>查看答案</summary>
+
+<p><strong>信号数量分析：</strong></p>
+<ol>
+<li>
+<p><strong>自回归（GPT）：</strong>
+   - 信号数：n个（每个位置预测下一个）
+   - 利用率：100%</p>
+</li>
+<li>
+<p><strong>MLM（BERT）：</strong>
+   - 掩码比例通常15%
+   - 信号数：0.15n
+   - 但每个信号看到双向上下文</p>
+</li>
+<li>
+<p><strong>置换语言模型（XLNet）：</strong>
+   - 理论上：n个
+   - 实践中：由于计算限制，通常预测后1/K
+   - 有效信号：n/K</p>
+</li>
+<li>
+<p><strong>Span corruption（T5）：</strong>
+   - 取决于corruption策略
+   - 典型值：15-25%的token被corruption
+   - 编码器看到所有，解码器预测corrupted部分</p>
+</li>
+</ol>
+<p><strong>结论：</strong></p>
+<ul>
+<li>纯信号数量：AR &gt; PLM &gt; MLM ≈ Span</li>
+<li>信号质量：双向 &gt; 单向</li>
+<li>实际效果取决于下游任务</li>
+</ul>
+</details>
+<h3 id="223">2.2.3 混合目标与统一框架</h3>
+<p><strong>UL2（Unified Language Learning）统一框架：</strong>
+将不同目标统一为"去噪"任务，通过前缀控制：</p>
+<ul>
+<li><code>[S2S]</code>：标准seq2seq去噪</li>
+<li><code>[NLU]</code>：类BERT的双向理解</li>
+<li><code>[NLG]</code>：类GPT的生成</li>
+</ul>
+<p><strong>混合策略：</strong></p>
+<p><strong>🔬 研究线索：</strong> </p>
+<ul>
+<li>最优的混合比例是什么？</li>
+<li>能否动态调整混合比例？</li>
+<li>不同阶段用不同目标？</li>
+</ul>
+<h3 id="224-fill-in-the-middle-fim">2.2.4 Fill-in-the-Middle (FIM)</h3>
+<p>代码生成模型的创新：不只是从左到右，还能填充中间。</p>
+<p><strong>FIM训练：</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nl">原始</span><span class="p">:</span><span class="w"> </span><span class="o">[</span><span class="n">Prefix</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">Middle</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">Suffix</span><span class="o">]</span>
+<span class="nl">FIM格式</span><span class="p">:</span><span class="w"> </span><span class="o">[</span><span class="n">Prefix</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">Suffix</span><span class="o">]</span><span class="w"> </span><span class="o">&lt;</span><span class="n">FILL</span><span class="o">&gt;</span><span class="w"> </span><span class="o">[</span><span class="n">Middle</span><span class="o">]</span><span class="w"> </span><span class="o">&lt;</span><span class="k">END</span><span class="o">&gt;</span>
+</code></pre></div>
+
+<p><strong>优势：</strong></p>
+<ul>
+<li>更适合代码补全场景</li>
+<li>提供更灵活的生成能力</li>
+<li>不损害标准自回归性能</li>
+</ul>
+<p><strong>实现细节：</strong></p>
+<ul>
+<li>训练时随机选择分割点</li>
+<li>典型FIM比例：15-50%</li>
+<li>需要特殊标记</li>
+</ul>
+<h3 id="225">2.2.5 预训练目标的设计原则</h3>
+<ol>
+<li>
+<p><strong>任务对齐</strong>
+- 预训练目标应与下游任务对齐
+- 生成任务→自回归
+- 理解任务→双向</p>
+</li>
+<li>
+<p><strong>计算效率</strong>
+- 避免过于复杂的目标
+- 考虑并行化能力
+- 内存使用</p>
+</li>
+<li>
+<p><strong>数据效率</strong>
+- 最大化每个样本的学习信号
+- 避免信息浪费</p>
+</li>
+</ol>
+<p><strong>⚡ 设计选择：</strong> 
+选择预训练目标时考虑：</p>
+<ul>
+<li>主要应用场景</li>
+<li>计算资源限制</li>
+<li>是否需要生成能力</li>
+<li>数据规模和质量</li>
+</ul>
+<h3 id="226">2.2.6 条件生成与控制</h3>
+<ol>
+<li><strong>条件语言建模</strong>
+$$P(x|c) = \prod_{i=1}^{n} P(x_i|x_{&lt;i}, c)$$
+其中 $c$ 可以是：</li>
+</ol>
+<ul>
+<li>主题/领域标签</li>
+<li>情感/风格标记</li>
+<li>结构化属性</li>
+</ul>
+<ol start="2">
+<li><strong>指令跟随预训练</strong>
+将任务描述作为条件：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="n">Instruction</span><span class="o">:</span><span class="w"> </span><span class="n">Translate</span><span class="w"> </span><span class="n">English</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">French</span>
+<span class="n">Input</span><span class="o">:</span><span class="w"> </span><span class="n">Hello</span><span class="w"> </span><span class="n">world</span>
+<span class="n">Output</span><span class="o">:</span><span class="w"> </span><span class="n">Bonjour</span><span class="w"> </span><span class="n">le</span><span class="w"> </span><span class="n">monde</span>
+</code></pre></div>
+
+<ol start="3">
+<li><strong>多任务预训练</strong>
+不同任务共享模型，通过prompt区分。</li>
+</ol>
+<h4 id="24">练习 2.4：设计领域自适应预训练策略</h4>
+<p>如何设计预训练策略，使模型既保持通用能力，又在特定领域表现优秀？</p>
+<details markdown="1">
+<summary>查看答案</summary>
+
+<p><strong>策略设计：</strong></p>
+<ol>
+<li>
+<p><strong>数据混合：</strong>
+   - 通用数据：70-80%保持基础能力
+   - 领域数据：20-30%提升专业性
+   - 动态调整比例based on validation metrics</p>
+</li>
+<li>
+<p><strong>课程学习：</strong>
+   - 阶段1：100%通用数据
+   - 阶段2：逐渐增加领域数据
+   - 阶段3：领域数据为主，少量通用数据防止遗忘</p>
+</li>
+<li>
+<p><strong>领域标记：</strong></p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>[DOMAIN: Medical] The patient presented with...
+[DOMAIN: Legal] The defendant argued that...
+</code></pre></div>
+
+<ol start="4">
+<li>
+<p><strong>多目标优化：</strong>
+$$\mathcal{L} = \lambda_1 \mathcal{L}_{general} + \lambda_2 \mathcal{L}_{domain}$$</p>
+</li>
+<li>
+<p><strong>评估指标：</strong>
+   - 通用benchmark不下降超过X%
+   - 领域任务提升Y%
+   - 监控catastrophic forgetting</p>
+</li>
+</ol>
+</details>
+<h3 id="227">2.2.7 预训练目标的最新进展</h3>
+<p>预训练目标的创新并未停止。随着模型规模的增长和应用场景的拓展，新的预训练范式不断涌现，每一个都试图解决现有方法的特定局限。</p>
+<ol>
+<li><strong>检索增强预训练（RETRO及其后续）</strong></li>
+</ol>
+<p>传统LLM将所有知识压缩在参数中，这既低效又难以更新。检索增强预训练提供了新思路：</p>
+<p><strong>RETRO (Retrieval-Enhanced Transformer, DeepMind 2022)</strong>：</p>
+<ul>
+<li><strong>核心创新</strong>：训练时就整合外部知识库，而非仅在推理时检索</li>
+<li><strong>技术细节</strong>：</li>
+<li>将输入分成chunks，每个chunk检索k个最相关文档</li>
+<li>通过cross-attention融合检索信息</li>
+<li>参数量减少25倍仍能匹配GPT-3性能</li>
+<li><strong>优势</strong>：</li>
+<li>知识与参数解耦，便于更新</li>
+<li>减少幻觉，提升事实准确性</li>
+<li>更好的样本效率</li>
+</ul>
+<ol start="2">
+<li><strong>多模态预训练的统一框架</strong></li>
+</ol>
+<p>从单模态到多模态是必然趋势，关键挑战是设计统一的预训练目标。主流方法包括：</p>
+<ul>
+<li><strong>对比学习</strong>（CLIP）：图文配对的相似度学习</li>
+<li><strong>生成式统一</strong>（Flamingo）：图像token化后的自回归生成</li>
+<li><strong>原生多模态</strong>（Gemini）：从头训练的统一架构，任意模态的next-token prediction</li>
+</ul>
+<ol start="3">
+<li><strong>思维链预训练：过程监督的革命</strong></li>
+</ol>
+<p>传统预训练只关注最终答案，思维链预训练关注推理过程。核心方法：</p>
+<ul>
+<li>训练时要求生成中间推理步骤</li>
+<li>使用过程奖励模型（PRM）对每一步提供监督</li>
+<li>数据来源包括人工标注、合成数据和自举方法</li>
+<li>在数学推理等任务上准确率提升显著（30%+）</li>
+</ul>
+<ol start="4">
+<li><strong>自适应预训练：任务感知的动态目标</strong></li>
+</ol>
+<p>最新研究开始探索动态调整预训练目标：</p>
+<p><strong>核心思想</strong>：</p>
+<ul>
+<li>不同阶段关注不同能力</li>
+<li>根据模型状态调整目标难度</li>
+<li>课程学习在预训练中的应用</li>
+</ul>
+<p><strong>具体方法</strong>：</p>
+<ul>
+<li><strong>UL2（Unified Language Learner）</strong>：</li>
+<li>混合不同的去噪目标</li>
+<li>前缀提示告诉模型当前任务类型</li>
+<li>在各种下游任务上表现更均衡</li>
+<li><strong>自适应掩码率</strong>：</li>
+<li>开始时低掩码率，学习基础模式</li>
+<li>逐步提高难度，学习复杂推理</li>
+<li>类似人类的认知发展过程</li>
+</ul>
+<ol start="5">
+<li><strong>预训练目标的理论反思</strong></li>
+</ol>
+<p>这些进展背后反映了对预训练本质的深入理解：</p>
+<p><strong>从压缩到理解</strong>：</p>
+<ul>
+<li>早期：预训练是压缩互联网</li>
+<li>现在：预训练是学习世界模型</li>
+<li>未来：预训练是获得通用智能？</li>
+</ul>
+<p><strong>效率与效果的权衡</strong>：</p>
+<ul>
+<li>更复杂的目标需要更多计算</li>
+<li>但可能用更少数据达到更好效果</li>
+<li>最优权衡点仍在探索</li>
+</ul>
+<p><strong>🔬 研究线索与开放问题：</strong></p>
+<ol>
+<li>
+<p><strong>组合式预训练</strong>：
+   - 如何最优组合多个预训练目标？
+   - 是否存在目标之间的负迁移？
+   - 动态权重调整的最佳策略？</p>
+</li>
+<li>
+<p><strong>因果理解的预训练</strong>：
+   - 当前模型学习相关性而非因果性
+   - 如何设计促进因果推理的预训练任务？
+   - 反事实数据生成与利用</p>
+</li>
+<li>
+<p><strong>持续预训练</strong>：
+   - 如何让模型持续学习新知识？
+   - 避免灾难性遗忘的预训练策略
+   - 知识编辑与增量学习的统一</p>
+</li>
+<li>
+<p><strong>预训练的极限</strong>：
+   - 是否所有能力都能通过预训练获得？
+   - 什么需要通过其他方式（如强化学习）习得？
+   - 预训练与人类学习的本质差异</p>
+</li>
+</ol>
+<p>预训练目标的创新远未结束。每一个新目标都在尝试让模型不仅"记住"更多，更要"理解"更深。这条道路的尽头，也许就是真正的人工通用智能。</p>
+<hr />
+<h2 id="23_1"><a name="section3"></a>2.3 数据准备与预处理</h2>
+<p>"数据决定模型的上限，算法只是逼近这个上限。"本节详细探讨如何准备高质量的预训练数据，这是GPT成功的关键因素之一。</p>
+<h3 id="231">2.3.1 数据来源与规模</h3>
+<p><strong>典型数据来源：</strong></p>
+<ol>
+<li><strong>网页数据</strong>：CommonCrawl, C4, RefinedWeb</li>
+<li><strong>书籍</strong>：BookCorpus, Gutenberg</li>
+<li><strong>百科</strong>：Wikipedia</li>
+<li><strong>代码</strong>：GitHub, StackOverflow</li>
+<li><strong>学术</strong>：arXiv, PubMed</li>
+<li><strong>对话</strong>：Reddit, forums</li>
+</ol>
+<p><strong>数据规模演进：</strong></p>
+<ul>
+<li>GPT-2: 40GB文本（WebText）</li>
+<li>GPT-3: 570GB文本（45TB过滤后）</li>
+<li>LLaMA: 1.4T tokens</li>
+<li>Chinchilla: 1.4T tokens（但模型更小）</li>
+</ul>
+<h3 id="232">2.3.2 数据清洗流程</h3>
+<ol>
+<li>
+<p><strong>语言检测与过滤</strong></p>
+</li>
+<li>
+<p><strong>质量过滤</strong>
+- 长度过滤：太短或太长的文档
+- 重复率检查：n-gram重复
+- 特殊字符比例
+- 困惑度过滤（用小模型评分）</p>
+</li>
+<li>
+<p><strong>去重</strong>
+- 精确去重：MD5/SHA哈希
+- 模糊去重：MinHash, SimHash
+- 文档级 vs 段落级去重</p>
+</li>
+<li>
+<p><strong>隐私与安全</strong>
+- PII（个人身份信息）检测与移除
+- 电话号码、邮箱、信用卡号
+- 使用正则表达式和NER模型</p>
+</li>
+</ol>
+<h4 id="25">练习 2.5：设计数据质量评分系统</h4>
+<p>设计一个综合的数据质量评分函数，考虑多个维度。</p>
+<details>
+<summary>查看答案</summary>
+<p><strong>质量评分系统：</strong></p>
+<p><strong>阈值设置：</strong></p>
+<ul>
+<li>使用人工标注的高质量样本校准</li>
+<li>设置百分位数阈值（如保留top 80%）</li>
+<li>不同来源使用不同阈值</li>
+</ul>
+</details>
+<h3 id="233-tokenization">2.3.3 Tokenization策略</h3>
+<ol>
+<li>
+<p><strong>词表大小的权衡</strong>
+- 小词表：序列更长，计算量大
+- 大词表：参数量增加，稀有token问题
+- 典型选择：32k-100k</p>
+</li>
+<li>
+<p><strong>BPE vs WordPiece vs SentencePiece</strong>
+- BPE：字节级，语言无关
+- SentencePiece：支持无空格语言
+- Unigram LM：概率驱动</p>
+</li>
+<li>
+<p><strong>特殊token设计</strong></p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="o">&lt;|</span><span class="n">endoftext</span><span class="o">|&gt;:</span><span class="w"> </span><span class="n">文档分隔</span>
+<span class="o">&lt;|</span><span class="n">padding</span><span class="o">|&gt;:</span><span class="w"> </span><span class="n">填充</span><span class="err">（</span><span class="n">如果需要</span><span class="err">）</span>
+<span class="o">&lt;|</span><span class="n">im_start</span><span class="o">|&gt;,</span><span class="w"> </span><span class="o">&lt;|</span><span class="n">im_end</span><span class="o">|&gt;:</span><span class="w"> </span><span class="n">对话标记</span>
+</code></pre></div>
+
+<p><strong>🔬 研究线索：</strong> </p>
+<ul>
+<li>动态词表：根据数据分布调整</li>
+<li>多语言统一词表 vs 语言特定词表</li>
+<li>字符级模型的复兴？</li>
+</ul>
+<h3 id="234">2.3.4 文档拼接与打包</h3>
+<p><strong>问题：</strong>文档长度不一，如何高效利用序列长度？</p>
+<p><strong>策略1：简单截断/填充</strong></p>
+<ul>
+<li>优点：实现简单</li>
+<li>缺点：浪费计算或丢失信息</li>
+</ul>
+<p><strong>策略2：文档拼接</strong></p>
+<p><strong>策略3：动态batching</strong></p>
+<ul>
+<li>相似长度的序列组成batch</li>
+<li>减少padding浪费</li>
+</ul>
+<h3 id="235">2.3.5 数据配比与采样</h3>
+<p><strong>多源数据的配比：</strong></p>
+<p><strong>采样策略：</strong></p>
+<ol>
+<li><strong>静态配比</strong>：预先混合</li>
+<li><strong>动态采样</strong>：训练时按比例采样</li>
+<li><strong>温度采样</strong>： $p_i \propto (n_i)^{1/T}$</li>
+</ol>
+<p><strong>⚡ 设计选择：</strong> </p>
+<ul>
+<li>高质量数据可以多次使用</li>
+<li>代码数据提升推理能力</li>
+<li>领域平衡避免偏见</li>
+</ul>
+<h4 id="26">练习 2.6：分析重复数据的影响</h4>
+<p>设计实验研究数据重复对模型性能的影响。</p>
+<details>
+<summary>查看答案</summary>
+<p><strong>实验设计：</strong></p>
+<ol>
+<li>
+<p><strong>重复类型：</strong>
+   - 完全重复：相同文档出现多次
+   - 近似重复：轻微变化（如不同爬取时间）
+   - 模板重复：结构相同，内容不同</p>
+</li>
+<li>
+<p><strong>实验设置：</strong></p>
+</li>
+<li>
+<p><strong>预期影响：</strong>
+   - <strong>记忆 vs 泛化</strong>：高重复导致过拟合
+   - <strong>训练效率</strong>：重复数据浪费计算
+   - <strong>下游性能</strong>：泛化能力下降</p>
+</li>
+<li>
+<p><strong>缓解策略：</strong>
+   - 在线去重
+   - 降低重复样本的采样权重
+   - 使用哈希表追踪已见样本</p>
+</li>
+</ol>
+</details>
+<h3 id="236">2.3.6 数据增强技术</h3>
+<p>尽管语言模型预训练通常依赖海量数据，但精心设计的数据增强仍能提升模型的鲁棒性和泛化能力。关键是在增加多样性的同时保持语言的自然性。</p>
+<ol>
+<li><strong>回译（Back-translation）：多语言桥梁</strong></li>
+</ol>
+<p>回译不仅是机器翻译的经典技术，在预训练中也展现独特价值：</p>
+<div class="codehilite"><pre><span></span><code>原文 → 翻译到中间语言 → 翻译回原语言
+</code></pre></div>
+
+<p><strong>技术细节</strong>：</p>
+<ul>
+<li><strong>中间语言选择</strong>：选择语言系谱较远的语言（如英→中→英）产生更大变化</li>
+<li><strong>温度控制</strong>：翻译时使用不同温度，产生多样的改写</li>
+<li><strong>质量过滤</strong>：使用语义相似度确保回译质量</li>
+</ul>
+<p><strong>效果与原理</strong>：</p>
+<ul>
+<li>生成语义相近但表达不同的句子</li>
+<li>特别有助于提升模型的paraphrase理解能力</li>
+<li>对低资源语言尤其有效，可以利用高资源语言的知识</li>
+</ul>
+<ol start="2">
+<li><strong>结构级增强：超越词句的变换</strong></li>
+</ol>
+<p><strong>段落重组</strong>：</p>
+<ul>
+<li><strong>局部打乱</strong>：在语义单元内重排句子，保持段落主题</li>
+<li><strong>层次重构</strong>：改变论述顺序（如结论前置），训练模型的结构理解</li>
+<li><strong>条件生成</strong>：给定结论，生成支撑论据，强化逻辑推理</li>
+</ul>
+<p><strong>文档混合</strong>：</p>
+<ul>
+<li><strong>主题相关混合</strong>：将相同主题的不同文档段落交织</li>
+<li><strong>风格迁移</strong>：将技术文档改写为通俗解释，反之亦然</li>
+<li><strong>跨领域桥接</strong>：在不同领域文档间建立联系</li>
+</ul>
+<ol start="3">
+<li><strong>语义保持的噪声注入</strong></li>
+</ol>
+<p>传统噪声方法往往破坏语义，新一代方法更加精细：</p>
+<p><strong>智能拼写错误</strong>：</p>
+<ul>
+<li>模拟真实的键盘错误模式（相邻键、同音词）</li>
+<li>保留足够上下文用于纠错</li>
+<li>训练模型的错误容忍能力</li>
+</ul>
+<p><strong>上下文相关替换</strong>：</p>
+<ul>
+<li>使用语言模型生成的同义词/近义词</li>
+<li>考虑词性、语法一致性</li>
+<li>保持专有名词和关键术语</li>
+</ul>
+<p><strong>语法变体生成</strong>：</p>
+<ul>
+<li>主动被动转换</li>
+<li>时态变化（保持时间逻辑）</li>
+<li>句式重构（简单句↔复合句）</li>
+</ul>
+<ol start="4">
+<li><strong>对抗性数据增强</strong></li>
+</ol>
+<p>利用模型自身的弱点生成训练数据：</p>
+<p><strong>对抗性扰动</strong>：</p>
+<ul>
+<li>找到让模型预测错误的最小修改</li>
+<li>将这些例子加入训练集</li>
+<li>迭代提升模型鲁棒性</li>
+</ul>
+<p><strong>难例挖掘</strong>：</p>
+<ul>
+<li>识别模型困惑度高的片段</li>
+<li>生成类似的困难样本</li>
+<li>专门强化薄弱环节</li>
+</ul>
+<ol start="5">
+<li><strong>合成数据增强</strong></li>
+</ol>
+<p>利用强模型生成训练数据成为新趋势：</p>
+<p><strong>指令跟随数据</strong>：</p>
+<ul>
+<li>使用GPT-4生成指令-回答对</li>
+<li>自动构造推理链</li>
+<li>生成多轮对话</li>
+</ul>
+<p><strong>领域特定增强</strong>：</p>
+<ul>
+<li>代码：生成函数变体、重构示例</li>
+<li>数学：步骤展开、多解法生成</li>
+<li>科学：假设-验证对构造</li>
+</ul>
+<ol start="6">
+<li><strong>增强策略的智能组合</strong></li>
+</ol>
+<p><strong>课程式增强</strong>：</p>
+<ul>
+<li>初期：保守增强，维持数据质量</li>
+<li>中期：增加难度，引入更多变化</li>
+<li>后期：对抗性增强，提升鲁棒性</li>
+</ul>
+<p><strong>自适应增强</strong>：</p>
+<ul>
+<li>根据模型在验证集上的表现调整增强策略</li>
+<li>对模型薄弱的方面加强增强</li>
+<li>动态平衡原始数据和增强数据的比例</li>
+</ul>
+<p><strong>质量控制机制</strong>：</p>
+<ul>
+<li><strong>语义一致性检查</strong>：确保增强后语义不变</li>
+<li><strong>自然度评分</strong>：过滤不自然的生成</li>
+<li><strong>多样性度量</strong>：避免增强带来的模式坍缩</li>
+</ul>
+<p><strong>🔬 研究线索：</strong> </p>
+<ul>
+<li><strong>神经增强</strong>：训练专门的增强模型，学习最优的数据变换</li>
+<li><strong>因果增强</strong>：生成反事实样本，提升因果推理能力</li>
+<li><strong>个性化增强</strong>：根据下游任务定制增强策略</li>
+</ul>
+<h3 id="237">2.3.7 数据版本管理</h3>
+<p><strong>最佳实践：</strong></p>
+<ol>
+<li><strong>数据血统追踪</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;v2.1&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;sources&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;cc_2023&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;wiki_202312&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;filters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;quality&gt;0.8&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;length&lt;10k&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;dedup_method&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;minhash_0.8&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<ol start="2">
+<li>
+<p><strong>增量更新</strong>
+   - 新数据的持续集成
+   - A/B测试新数据的影响</p>
+</li>
+<li>
+<p><strong>可重现性</strong>
+   - 保存所有预处理脚本
+   - 记录随机种子
+   - 数据快照存档</p>
+</li>
+</ol>
+<p><strong>🔬 研究线索：</strong> </p>
+<ul>
+<li>主动学习：让模型选择自己的训练数据</li>
+<li>数据质量的自动评估指标</li>
+<li>合成数据在预训练中的作用</li>
+</ul>
+<hr />
+<h2 id="24_1"><a name="section4"></a>2.4 训练动力学与优化策略</h2>
+<p>大规模预训练不仅是算法问题，更是工程挑战。本节探讨如何稳定、高效地训练GPT规模的模型。</p>
+<h3 id="241">2.4.1 优化器选择</h3>
+<p><strong>Adam及其变体：</strong></p>
+<ol>
+<li>
+<p><strong>标准Adam</strong>
+$$m_t = \beta_1 m_{t-1} + (1-\beta_1)g_t$$
+$$v_t = \beta_2 v_{t-1} + (1-\beta_2)g_t^2$$
+$$\theta_t = \theta_{t-1} - \alpha \frac{m_t}{\sqrt{v_t} + \epsilon}$$</p>
+</li>
+<li>
+<p><strong>AdamW（权重衰减解耦）</strong>
+$$\theta_t = \theta_{t-1} - \alpha \left(\frac{m_t}{\sqrt{v_t} + \epsilon} + \lambda \theta_{t-1}\right)$$
+关键区别：权重衰减直接作用于参数，而非梯度。</p>
+</li>
+<li>
+<p><strong>8-bit Adam（内存优化）</strong>
+- 量化优化器状态
+- 节省75%优化器内存
+- 对大模型关键</p>
+</li>
+</ol>
+<p><strong>为什么选择AdamW？</strong></p>
+<ul>
+<li>自适应学习率</li>
+<li>动量帮助越过局部最优</li>
+<li>权重衰减正则化</li>
+<li>实践证明效果最稳定</li>
+</ul>
+<h3 id="242">2.4.2 学习率调度</h3>
+<ol>
+<li>
+<p><strong>余弦退火</strong>
+$$\eta_t = \eta_{min} + \frac{1}{2}(\eta_{max} - \eta_{min})(1 + \cos(\pi t / T))$$</p>
+</li>
+<li>
+<p><strong>线性预热 + 余弦衰减</strong></p>
+</li>
+<li>
+<p><strong>常数学习率（with warmup）</strong>
+- 简单但有效
+- LLaMA采用此策略
+- 依赖early stopping</p>
+</li>
+</ol>
+<p><strong>⚡ 设计选择：</strong> </p>
+<ul>
+<li>预热步数：典型值0.1-1%总步数</li>
+<li>最小学习率：通常是最大值的10%</li>
+<li>重启策略：用于继续训练</li>
+</ul>
+<h4 id="27">练习 2.7：分析不同学习率调度的影响</h4>
+<p>实验比较不同学习率策略对训练动态的影响。</p>
+<details>
+<summary>查看答案</summary>
+<p><strong>实验设计：</strong></p>
+<ol>
+<li>
+<p><strong>对比策略：</strong>
+   - 固定学习率
+   - 线性衰减
+   - 余弦退火
+   - 周期性重启</p>
+</li>
+<li>
+<p><strong>观察指标：</strong></p>
+</li>
+<li>
+<p><strong>预期发现：</strong>
+   - <strong>固定LR</strong>：</p>
+<ul>
+<li>后期振荡</li>
+<li>难以收敛到最优</li>
+</ul>
+</li>
+</ol>
+<ul>
+<li>
+<p><strong>余弦退火</strong>：</p>
+<ul>
+<li>平滑下降</li>
+<li>末期精细调整</li>
+<li>最终性能最好</li>
+</ul>
+</li>
+<li>
+<p><strong>周期重启</strong>：</p>
+<ul>
+<li>跳出局部最优</li>
+<li>集成效果</li>
+<li>训练时间更长</li>
+</ul>
+</li>
+</ul>
+<ol start="4">
+<li><strong>关键洞察：</strong>
+   - 预热防止初期不稳定
+   - 衰减帮助精细收敛
+   - 过快衰减导致欠拟合</li>
+</ol>
+</details>
+<h3 id="243">2.4.3 梯度累积与有效批大小</h3>
+<p><strong>问题：</strong>单GPU内存有限，如何实现大批量训练？</p>
+<p><strong>梯度累积：</strong></p>
+<p><strong>有效批大小计算：</strong></p>
+<div class="codehilite"><pre><span></span><code>effective_batch_size = 
+    gpu_count × per_gpu_batch_size × accumulation_steps
+</code></pre></div>
+
+<p><strong>批大小的影响：</strong></p>
+<ul>
+<li>小批量：噪声大，泛化好，收敛慢</li>
+<li>大批量：稳定，收敛快，可能泛化差</li>
+<li>临界批大小：存在收益递减点</li>
+</ul>
+<h3 id="244">2.4.4 混合精度训练</h3>
+<p><strong>FP16/BF16训练：</strong></p>
+<p><strong>BF16 vs FP16：</strong></p>
+<ul>
+<li>BF16：动态范围大，不需要loss scaling</li>
+<li>FP16：精度高，需要careful scaling</li>
+<li>趋势：BF16成为主流</li>
+</ul>
+<p><strong>内存节省：</strong></p>
+<ul>
+<li>激活值：减半</li>
+<li>模型权重：减半（训练时保留FP32主权重）</li>
+<li>总体：可训练2倍大的模型</li>
+</ul>
+<h3 id="245">2.4.5 训练稳定性技巧</h3>
+<p>训练大规模语言模型就像驾驭一匹烈马——稍有不慎就会失控。本节深入探讨确保训练稳定的各种技术，这些技术的组合使用是成功训练的关键。</p>
+<ol>
+<li><strong>梯度裁剪：驯服梯度爆炸</strong></li>
+</ol>
+<p>梯度裁剪是防止训练崩溃的第一道防线，但其实现细节往往决定成败。</p>
+<p><strong>全局范数裁剪</strong>：
+$$g \leftarrow g \cdot \min\left(1, \frac{c}{||g||_2}\right)$$
+其中 $c$ 是裁剪阈值（通常1.0）。关键见解：</p>
+<ul>
+<li><strong>裁剪前先统计</strong>：记录裁剪频率，过高说明学习率或初始化有问题</li>
+<li><strong>自适应阈值</strong>：根据历史梯度范数的分位数动态调整</li>
+<li><strong>层级裁剪</strong>：不同层使用不同阈值，embedding层通常需要更严格裁剪</li>
+</ul>
+<p><strong>值裁剪 vs 范数裁剪</strong>：</p>
+<ul>
+<li>值裁剪：<code>torch.clamp(grad, -c, c)</code> 简单但可能改变梯度方向</li>
+<li>范数裁剪：保持方向，只缩放大小，更适合优化</li>
+<li>混合策略：先范数裁剪，再对异常值进行值裁剪</li>
+</ul>
+<ol start="2">
+<li><strong>损失峰值检测与恢复：优雅的失败处理</strong></li>
+</ol>
+<p>大模型训练中，损失突然爆炸并非罕见。关键是如何快速检测和恢复。</p>
+<p><strong>检测机制</strong>：</p>
+<ul>
+<li><strong>移动平均监控</strong>：损失超过 $\mu + k\sigma$ 触发警报（ $k$ 通常取3-5）</li>
+<li><strong>梯度范数监控</strong>：突增往往预示即将崩溃</li>
+<li><strong>激活值统计</strong>：监控各层输出的均值和方差</li>
+</ul>
+<p><strong>恢复策略</strong>：</p>
+<ol>
+<li>
+<p><strong>检查点回滚</strong>：
+   - 保存多个检查点（滚动窗口）
+   - 检测到异常立即回滚到最近稳定点
+   - 调整学习率后重新开始</p>
+</li>
+<li>
+<p><strong>动态修复</strong>：
+   - 跳过异常batch，但记录下来分析
+   - 临时降低学习率直到稳定
+   - 重新初始化最后几层（极端情况）</p>
+</li>
+<li>
+<p><strong>根因分析</strong>：
+   - 记录崩溃前的数据batch
+   - 检查是否有异常数据（超长序列、特殊字符）
+   - 分析梯度累积模式</p>
+</li>
+<li>
+<p><strong>参数初始化：良好的开端</strong></p>
+</li>
+</ol>
+<p>初始化不当是训练不稳定的常见原因。现代初始化方法需要考虑架构特性。</p>
+<p><strong>标准初始化策略</strong>：</p>
+<ul>
+<li><strong>Xavier/Glorot</strong>： $\sigma = \sqrt{2 / (n_{in} + n_{out})}$ 适用于线性层</li>
+<li><strong>He/Kaiming</strong>： $\sigma = \sqrt{2 / n_{in}}$ 适用于ReLU网络</li>
+<li><strong>GPT风格</strong>： $\sigma = 0.02 / \sqrt{2 \cdot n_{layers}}$ 考虑深度累积</li>
+</ul>
+<p><strong>特殊组件初始化</strong>：</p>
+<ol>
+<li>
+<p><strong>Embedding层</strong>：
+   - 正态分布 $\mathcal{N}(0, 0.02)$ 或均匀分布
+   - 位置编码：更小的方差避免主导</p>
+</li>
+<li>
+<p><strong>输出层</strong>：
+   - 更小初始化： $\sigma = 0.02 / \sqrt{n_{layers}}$
+   - 避免初始预测过于自信</p>
+</li>
+<li>
+<p><strong>LayerNorm</strong>：
+   - 权重初始化为1.0（不是随机）
+   - 偏置初始化为0
+   - 关键：确保初始时不改变分布</p>
+</li>
+<li>
+<p><strong>残差分支缩放</strong>：</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>初始化后手动缩放：output = output * (1 / sqrt(n_layers))
+</code></pre></div>
+
+<ol start="4">
+<li><strong>学习率预热：温柔的开始</strong></li>
+</ol>
+<p>预热不仅是技巧，更是必需。其背后的数学原理值得深究。</p>
+<p><strong>预热策略对比</strong>：</p>
+<ul>
+<li><strong>线性预热</strong>： $lr_t = lr_{target} \cdot \min(1, t/T_{warmup})$</li>
+<li><strong>余弦预热</strong>： $lr_t = lr_{target} \cdot 0.5(1 + \cos(\pi \cdot \max(0, 1-t/T_{warmup})))$</li>
+<li><strong>指数预热</strong>： $lr_t = lr_{target} \cdot (1 - e^{-t/\tau})$</li>
+</ul>
+<p><strong>预热步数选择</strong>：</p>
+<ul>
+<li>经验法则：总步数的0.1%-1%</li>
+<li>模型越大，预热越长</li>
+<li>Batch size越大，预热越长</li>
+</ul>
+<p><strong>为什么预热有效</strong>：</p>
+<ol>
+<li><strong>适应性</strong>：让优化器积累合理的动量统计</li>
+<li><strong>稳定性</strong>：避免初期大步长破坏初始化</li>
+<li>
+<p><strong>探索性</strong>：允许模型先探索损失景观</p>
+</li>
+<li>
+<p><strong>数值精度管理</strong></p>
+</li>
+</ol>
+<p>FP16/BF16训练带来效率提升，但也引入稳定性挑战。</p>
+<p><strong>混合精度训练要点</strong>：</p>
+<ul>
+<li><strong>损失缩放</strong>：动态调整防止梯度下溢</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="err">初始</span><span class="n">scale</span><span class="o">:</span><span class="w"> </span><span class="mi">2</span><span class="o">^</span><span class="mi">16</span>
+<span class="err">增长因子</span><span class="o">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="n">backoff因子</span><span class="o">:</span><span class="w"> </span><span class="mf">0.5</span>
+</code></pre></div>
+
+<ul>
+<li><strong>关键层保持FP32</strong>：</li>
+<li>Softmax计算（数值稳定性）</li>
+<li>损失计算（精度要求）</li>
+<li>LayerNorm（统计精度）</li>
+</ul>
+<p><strong>BF16 vs FP16</strong>：</p>
+<ul>
+<li>BF16：更大数值范围，减少溢出</li>
+<li>FP16：更高精度，需要损失缩放</li>
+<li>趋势：BF16逐渐成为主流</li>
+</ul>
+<ol start="6">
+<li><strong>优化器状态管理</strong></li>
+</ol>
+<p>Adam等自适应优化器的状态管理对稳定性至关重要。</p>
+<p><strong>状态初始化</strong>：</p>
+<ul>
+<li>避免冷启动：可以从小模型继承优化器状态</li>
+<li>动量预热：初期使用较小的 $\beta_1$</li>
+</ul>
+<p><strong>状态裁剪</strong>：</p>
+<div class="codehilite"><pre><span></span><code>二阶矩裁剪：v = torch.clamp(v, 0, threshold)
+防止自适应学习率过小
+</code></pre></div>
+
+<p><strong>状态重置策略</strong>：</p>
+<ul>
+<li>检测到训练停滞时部分重置</li>
+<li>保留一阶动量，重置二阶动量</li>
+</ul>
+<ol start="7">
+<li><strong>架构级稳定性设计</strong></li>
+</ol>
+<p>某些架构选择天然更稳定：</p>
+<p><strong>Pre-norm vs Post-norm</strong>：</p>
+<ul>
+<li>Pre-norm：更稳定，成为主流</li>
+<li>Post-norm：需要careful初始化和学习率</li>
+</ul>
+<p><strong>残差连接变体</strong>：</p>
+<ul>
+<li>标准加法：简单有效</li>
+<li>门控残差：增加灵活性但增加参数</li>
+<li>随机深度：训练时随机跳过层</li>
+</ul>
+<p><strong>注意力机制稳定化</strong>：</p>
+<ul>
+<li>注意力熵正则化：防止过度集中</li>
+<li>注意力dropout：但要谨慎使用</li>
+<li>相对位置编码：比绝对位置更稳定</li>
+</ul>
+<ol start="8">
+<li><strong>监控与诊断系统</strong></li>
+</ol>
+<p>"If you can't measure it, you can't improve it"。完善的监控是稳定训练的保障。</p>
+<p><strong>关键监控指标</strong>：</p>
+<ol>
+<li>
+<p><strong>梯度统计</strong>：
+   - 各层梯度范数
+   - 梯度信噪比（gradient/parameter）
+   - 更新大小相对于参数大小</p>
+</li>
+<li>
+<p><strong>激活统计</strong>：
+   - 各层输出的均值、方差
+   - 死亡ReLU比例
+   - 注意力权重分布</p>
+</li>
+<li>
+<p><strong>优化器统计</strong>：
+   - 有效学习率（Adam中的 $lr/\sqrt{v}$ ）
+   - 动量累积情况
+   - 更新方向一致性</p>
+</li>
+</ol>
+<p><strong>异常模式识别</strong>：</p>
+<ul>
+<li><strong>梯度消失</strong>：底层梯度范数趋近于0</li>
+<li><strong>梯度爆炸</strong>：梯度范数指数增长</li>
+<li><strong>训练崩溃前兆</strong>：损失方差突然增大</li>
+</ul>
+<p><strong>实时干预系统</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 伪代码示例</span>
+<span class="k">if</span> <span class="n">gradient_norm</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+    <span class="c1"># 自动降低学习率</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;lr&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="mf">0.5</span>
+    <span class="c1"># 记录事件</span>
+    <span class="n">log_instability_event</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">gradient_norm</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>🔬 研究线索：</strong> </p>
+<ul>
+<li><strong>自适应稳定性</strong>：基于训练动态自动调整所有超参数</li>
+<li><strong>预测性维护</strong>：使用元模型预测训练崩溃</li>
+<li><strong>硬件感知稳定性</strong>：考虑不同硬件的数值特性</li>
+<li><strong>理论保证</strong>：设计具有收敛保证的训练算法</li>
+</ul>
+<h3 id="246">2.4.6 分布式训练策略</h3>
+<ol>
+<li>
+<p><strong>数据并行（DP）</strong>
+- 每个GPU有完整模型副本
+- 不同数据，梯度同步
+- 通信量：O(模型大小)</p>
+</li>
+<li>
+<p><strong>张量并行（TP）</strong>
+- 矩阵运算跨GPU分割
+- 适合单层很大的情况
+- 通信频繁，需要快速互联</p>
+</li>
+<li>
+<p><strong>流水线并行（PP）</strong>
+- 模型按层分割到不同GPU
+- 减少单GPU内存需求
+- 引入bubble时间</p>
+</li>
+</ol>
+<p><strong>组合策略：</strong></p>
+<div class="codehilite"><pre><span></span><code>总并行度 = DP × TP × PP
+例：64 GPUs = 8 DP × 4 TP × 2 PP
+</code></pre></div>
+
+<h4 id="28">练习 2.8：设计分布式训练配置</h4>
+<p>给定128个GPU和一个13B参数模型，设计最优的并行策略。</p>
+<details>
+<summary>查看答案</summary>
+<p><strong>分析过程：</strong></p>
+<ol>
+<li><strong>模型内存需求估算：</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code>参数：13B × 2 bytes (FP16) = 26GB
+梯度：13B × 2 bytes = 26GB  
+优化器(Adam)：13B × 8 bytes = 104GB
+激活值：~100GB (seq_len=2048, batch=1)
+总计：~256GB per replica
+</code></pre></div>
+
+<ol start="2">
+<li>
+<p><strong>硬件约束：</strong>
+   - 假设每GPU 80GB内存
+   - 需要至少4-way分割</p>
+</li>
+<li>
+<p><strong>推荐配置：</strong></p>
+</li>
+<li>
+<p><strong>通信分析：</strong>
+   - TP：AllReduce within node (NVLink)
+   - PP：P2P between stages
+   - DP：AllReduce across nodes</p>
+</li>
+<li>
+<p><strong>优化建议：</strong>
+   - 使用gradient checkpointing减少激活内存
+   - ZeRO-1分片优化器状态
+   - 混合精度必须开启</p>
+</li>
+</ol>
+</details>
+<h3 id="247">2.4.7 检查点策略</h3>
+<p><strong>保存策略：</strong></p>
+<p><strong>检查点频率：</strong></p>
+<ul>
+<li>时间间隔：每X小时</li>
+<li>步数间隔：每Y步</li>
+<li>性能触发：验证集提升时</li>
+</ul>
+<p><strong>存储优化：</strong></p>
+<ul>
+<li>增量保存：只存储变化的参数</li>
+<li>异步保存：不阻塞训练</li>
+<li>循环覆盖：保留最近N个</li>
+</ul>
+<h3 id="248">2.4.8 训练监控与调试</h3>
+<p><strong>关键指标监控：</strong></p>
+<ol>
+<li>
+<p><strong>损失曲线</strong>
+   - 训练loss平滑下降
+   - 验证loss跟随（无过拟合）
+   - 检测异常峰值</p>
+</li>
+<li>
+<p><strong>梯度统计</strong>
+   - 梯度范数
+   - 各层梯度分布
+   - 梯度消失/爆炸检测</p>
+</li>
+<li>
+<p><strong>权重更新</strong>
+   - 更新量相对于权重的比例
+   - 各层更新速度
+   - 死神经元检测</p>
+</li>
+<li>
+<p><strong>学习动态</strong>
+   - Token级别的loss分布
+   - 困难样本识别
+   - 注意力模式演化</p>
+</li>
+</ol>
+<p><strong>调试技巧：</strong></p>
+<ul>
+<li>小规模复现：先在小模型上调试</li>
+<li>确定性训练：固定所有随机种子</li>
+<li>梯度检查：数值梯度验证</li>
+<li>逐层分析：定位问题层</li>
+</ul>
+<p><strong>⚡ 设计选择总结：</strong> 
+训练大模型的关键决策：</p>
+<ol>
+<li>优化器：AdamW with weight decay</li>
+<li>学习率：Cosine schedule with warmup</li>
+<li>批大小：尽可能大（受限于内存）</li>
+<li>精度：BF16优于FP16</li>
+<li>并行策略：根据模型大小和硬件选择</li>
+<li>监控：全方位，及时发现问题</li>
+</ol>
+<hr />
+<h2 id="25_1"><a name="section5"></a>2.5 模型规模与计算效率</h2>
+<p>Scaling Laws揭示了模型性能与规模的关系，但如何在有限资源下最大化性能？本节探讨模型规模、数据量、计算量之间的权衡。</p>
+<h3 id="251-scaling-laws">2.5.1 Scaling Laws基础</h3>
+<p><strong>Kaplan et al. (2020) 的发现：</strong></p>
+<p>语言模型的loss与三个因素呈幂律关系：
+$$L(N, D, C) = \left(\frac{N_c}{N}\right)^{\alpha_N} + \left(\frac{D_c}{D}\right)^{\alpha_D} + \left(\frac{C_c}{C}\right)^{\alpha_C} + L_{\infty}$$
+其中：</p>
+<ul>
+<li>$N$ ：模型参数量</li>
+<li>$D$ ：训练数据量（tokens）</li>
+<li>$C$ ：计算量（FLOPs）</li>
+<li>$\alpha_N \approx 0.076$ , $\alpha_D \approx 0.095$ , $\alpha_C \approx 0.050$</li>
+</ul>
+<p><strong>关键洞察：</strong></p>
+<ol>
+<li>模型和数据应该同步扩展</li>
+<li>存在最优的计算分配</li>
+<li>更大总是更好（在合理范围内）</li>
+</ol>
+<h3 id="252-chinchilla">2.5.2 Chinchilla法则的修正</h3>
+<p><strong>Hoffmann et al. (2022) 的Chinchilla发现：</strong></p>
+<p>Kaplan的结论低估了数据的重要性。最优配置应该是：
+$$N_{opt} \propto C^{0.5}, \quad D_{opt} \propto C^{0.5}$$
+<strong>实际影响：</strong></p>
+<ul>
+<li>70B模型应该用1.4T tokens（而非300B）</li>
+<li>更小的模型+更多的数据=更好的性能</li>
+<li>推理效率的考虑</li>
+</ul>
+<p><strong>两种哲学的对比：</strong>
+| 模型 | 参数量 | 训练Tokens | 哲学 |</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>参数量</th>
+<th>训练Tokens</th>
+<th>哲学</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-3</td>
+<td>175B</td>
+<td>300B</td>
+<td>大模型，少数据</td>
+</tr>
+<tr>
+<td>Chinchilla</td>
+<td>70B</td>
+<td>1.4T</td>
+<td>平衡模型和数据</td>
+</tr>
+<tr>
+<td>LLaMA</td>
+<td>7B</td>
+<td>1T</td>
+<td>过度训练小模型</td>
+</tr>
+</tbody>
+</table>
+<h3 id="253">2.5.3 计算量估算</h3>
+<p><strong>前向传播FLOPs：</strong>
+对于Transformer，每个token的计算量约为：
+$$C_{forward} \approx 2N + 2n_{layer} \cdot n_{ctx} \cdot d_{model}$$
+其中第一项是参数计算，第二项是注意力计算。</p>
+<p><strong>训练总计算量：</strong>
+$$C_{total} = 6ND$$
+（因子6来自前向2+反向4）</p>
+<p><strong>内存需求估算：</strong></p>
+<h4 id="29">练习 2.9：计算训练成本</h4>
+<p>估算训练一个7B参数模型到Chinchilla-optimal所需的GPU小时数。</p>
+<details>
+<summary>查看答案</summary>
+<p><strong>计算过程：</strong></p>
+<ol>
+<li>
+<p><strong>Chinchilla-optimal数据量：</strong>
+   - 20 tokens per parameter
+   - 7B × 20 = 140B tokens</p>
+</li>
+<li>
+<p><strong>总FLOPs：</strong>
+   - $C = 6 × 7 × 10^9 × 140 × 10^9$
+   - $C = 5.88 × 10^{21}$ FLOPs</p>
+</li>
+<li>
+<p><strong>硬件假设（A100 GPU）：</strong>
+   - 峰值性能：312 TFLOPS (FP16)
+   - 实际利用率：~50%
+   - 有效性能：156 TFLOPS</p>
+</li>
+<li>
+<p><strong>时间计算：</strong></p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>时间 = 5.88e21 / (156e12 × 3600)
+      = 10,476 GPU-hours
+</code></pre></div>
+
+<ol start="5">
+<li>
+<p><strong>成本估算：</strong>
+   - 云服务：~$2/GPU-hour
+   - 总成本：~$21,000
+   - 使用8个GPU：~55天</p>
+</li>
+<li>
+<p><strong>优化考虑：</strong>
+   - 使用更大的GPU集群减少时间
+   - 混合精度训练必需
+   - 考虑spot instances降低成本</p>
+</li>
+</ol>
+</details>
+<h3 id="254">2.5.4 效率优化技术</h3>
+<ol>
+<li><strong>激活检查点（Gradient Checkpointing）</strong></li>
+</ol>
+<p>内存节省： $O(\sqrt{n_{layers}})$
+计算开销：~33%额外前向计算</p>
+<ol start="2">
+<li>
+<p><strong>模型分片（ZeRO优化）</strong>
+- ZeRO-1：分片优化器状态
+- ZeRO-2：分片优化器状态+梯度<br />
+- ZeRO-3：分片一切（包括参数）</p>
+</li>
+<li>
+<p><strong>激活值压缩</strong>
+- 量化激活到INT8
+- 选择性保存关键激活
+- 动态决定精度</p>
+</li>
+</ol>
+<p><strong>🔬 研究线索：</strong> </p>
+<ul>
+<li>自适应计算：根据输入难度动态调整计算量</li>
+<li>稀疏化：不是所有参数都需要对所有输入激活</li>
+<li>神经架构搜索：自动发现高效架构</li>
+</ul>
+<h3 id="255">2.5.5 模型架构的效率考虑</h3>
+<p>效率不仅关乎速度，更关乎如何在有限资源下达到最佳性能。本节深入探讨模型架构设计中的效率权衡，这些选择直接影响训练成本和推理延迟。</p>
+<ol>
+<li><strong>深度 vs 宽度：架构搜索的永恒主题</strong></li>
+</ol>
+<p>给定参数预算，如何在深度和宽度间分配是架构设计的核心问题。这不仅是数学优化，更涉及深层的表达能力理论。</p>
+<p><strong>深度的价值与代价：</strong></p>
+<ul>
+<li><strong>表达能力</strong>：深度带来的指数级组合增长</li>
+<li>每层可以学习越来越抽象的特征</li>
+<li>深度为 $L$ 的网络理论上可表达 $O(2^L)$ 复杂度的函数</li>
+<li><strong>优化挑战</strong>：</li>
+<li>梯度消失/爆炸随深度指数恶化</li>
+<li>需要更精细的初始化和归一化</li>
+<li>训练时间线性增长（串行依赖）</li>
+<li><strong>效率特点</strong>：</li>
+<li>内存带宽需求： $O(L \times d_{model})$</li>
+<li>推理延迟：严格线性于深度</li>
+</ul>
+<p><strong>宽度的优势与局限：</strong></p>
+<ul>
+<li><strong>容量增加</strong>：参数量平方增长</li>
+<li>更宽的层能存储更多"知识"</li>
+<li>适合记忆密集型任务</li>
+<li><strong>并行友好</strong>：</li>
+<li>矩阵运算可充分利用GPU</li>
+<li>宽度增加不影响推理延迟（理想情况）</li>
+<li><strong>边际递减</strong>：</li>
+<li>过宽导致参数利用率下降</li>
+<li>某些神经元可能永远不激活</li>
+</ul>
+<p><strong>最优配置的经验法则：</strong></p>
+<div class="codehilite"><pre><span></span><code>aspect_ratio = d_model / n_layers
+
+<span class="k">-</span> 小模型（&lt;1B）: aspect_ratio ≈ 40-50
+<span class="k">-</span> 中模型（1B-10B）: aspect_ratio ≈ 100-150  
+<span class="k">-</span> 大模型（&gt;10B）: aspect_ratio ≈ 100-200
+</code></pre></div>
+
+<ol start="2">
+<li><strong>注意力头数的精细设计</strong></li>
+</ol>
+<p>多头注意力的头数选择看似简单，实则暗含深刻的效率考虑。</p>
+<p><strong>头数与表达能力：</strong></p>
+<ul>
+<li><strong>理想情况</strong>：每个头学习不同的关系模式</li>
+<li><strong>实际观察</strong>：</li>
+<li>小模型：许多头学习相似模式（冗余）</li>
+<li>大模型：头专门化更明显</li>
+<li>某些头专注位置，某些头专注语义</li>
+</ul>
+<p><strong>关键维度 $d_k = d_{model} / n_{heads}$ ：</strong></p>
+<ul>
+<li><strong>下限约束</strong>： $d_k \geq 64$ 保证足够表达能力</li>
+<li><strong>上限考虑</strong>： $d_k \leq 128$ 避免单头过于复杂</li>
+<li><strong>量化友好</strong>： $d_k$ 是8的倍数利于硬件加速</li>
+</ul>
+<p><strong>Multi-Query Attention (MQA) 的效率革命：</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="err">标准</span><span class="n">MHA</span><span class="o">:</span><span class="w"> </span><span class="n">K</span><span class="o">,</span><span class="n">V</span><span class="w"> </span><span class="n">shape</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="n">n_heads</span><span class="o">,</span><span class="w"> </span><span class="n">seq_len</span><span class="o">,</span><span class="w"> </span><span class="n">d_k</span><span class="o">]</span>
+<span class="n">MQA</span><span class="o">:</span><span class="w"> </span><span class="n">K</span><span class="o">,</span><span class="n">V</span><span class="w"> </span><span class="n">shape</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="mi">1</span><span class="o">,</span><span class="w"> </span><span class="n">seq_len</span><span class="o">,</span><span class="w"> </span><span class="n">d_model</span><span class="o">]</span>
+<span class="err">节省</span><span class="n">KV</span><span class="w"> </span><span class="n">cache</span><span class="o">:</span><span class="w"> </span><span class="err">约</span><span class="w"> </span><span class="n">n_heads</span><span class="w"> </span><span class="err">倍</span>
+</code></pre></div>
+
+<p><strong>Grouped-Query Attention (GQA) 的平衡：</strong></p>
+<ul>
+<li>将头分组，组内共享KV</li>
+<li>典型配置：8个Q头共享1组KV</li>
+<li>在质量和效率间取得平衡</li>
+</ul>
+<ol start="3">
+<li><strong>FFN维度的优化</strong></li>
+</ol>
+<p>前馈网络占据模型大部分参数，其设计直接影响效率。</p>
+<p><strong>标准4倍规则的由来：</strong></p>
+<ul>
+<li>经验发现： $d_{ff} = 4 \times d_{model}$ 效果好</li>
+<li>理论解释：提供足够的非线性变换空间</li>
+<li>但非最优：许多神经元激活稀疏</li>
+</ul>
+<p><strong>激活函数对效率的影响：</strong></p>
+<ul>
+<li><strong>ReLU</strong>：稀疏激活，理论上可节省计算</li>
+<li><strong>GELU/SiLU</strong>：密集激活，但梯度更平滑</li>
+<li><strong>SwiGLU</strong>：</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>参数量：3 × d_model × d_ff (vs 2× for ReLU)
+性能提升：约5-10%
+效率权衡：1.5倍参数换取更好效果
+</code></pre></div>
+
+<p><strong>稀疏FFN的探索：</strong></p>
+<ul>
+<li><strong>固定稀疏</strong>：预定义连接模式</li>
+<li><strong>动态稀疏</strong>：根据输入选择激活</li>
+<li><strong>混合专家（MoE）</strong>：极端的稀疏化</li>
+</ul>
+<ol start="4">
+<li><strong>计算效率的架构创新</strong></li>
+</ol>
+<p><strong>Flash Attention的内存优化：</strong></p>
+<ul>
+<li><strong>问题</strong>：标准注意力的 $O(n^2)$ 内存需求</li>
+<li><strong>解决</strong>：分块计算，融合内核</li>
+<li><strong>效果</strong>：</li>
+<li>内存： $O(n)$ instead of $O(n^2)$</li>
+<li>速度：2-4倍提升（得益于更好的内存局部性）</li>
+</ul>
+<p><strong>线性注意力的近似：</strong></p>
+<ul>
+<li><strong>Performer</strong>：使用随机特征近似</li>
+<li>复杂度： $O(n \times d \times log(d))$</li>
+<li>质量损失：长序列时明显</li>
+<li><strong>LinFormer</strong>：低秩分解</li>
+<li>复杂度： $O(n \times k)$ ， $k$ 是秩</li>
+<li>适用场景：序列有冗余时</li>
+</ul>
+<p><strong>滑动窗口注意力：</strong></p>
+<ul>
+<li>每个token只看局部窗口</li>
+<li>通过多层实现全局感受野</li>
+<li>适合：局部依赖强的任务</li>
+</ul>
+<ol start="5">
+<li><strong>推理效率的专门优化</strong></li>
+</ol>
+<p><strong>KV Cache优化策略：</strong></p>
+<ol>
+<li>
+<p><strong>量化KV Cache</strong>：
+   - INT8量化：几乎无损
+   - INT4量化：轻微质量下降
+   - 混合精度：重要层保持高精度</p>
+</li>
+<li>
+<p><strong>KV Cache压缩</strong>：
+   - <strong>窗口压缩</strong>：只保留最近k个token
+   - <strong>重要性采样</strong>：基于注意力分数保留
+   - <strong>层级共享</strong>：相邻层共享KV</p>
+</li>
+<li>
+<p><strong>计算重用</strong>：
+   - <strong>前缀缓存</strong>：常见前缀只计算一次
+   - <strong>投机解码</strong>：小模型预测，大模型验证</p>
+</li>
+</ol>
+<p><strong>动态计算图优化：</strong></p>
+<ul>
+<li><strong>早停机制</strong>：简单输入提前退出</li>
+<li><strong>自适应深度</strong>：根据困难度选择层数</li>
+<li><strong>条件计算</strong>：某些模块按需激活</li>
+</ul>
+<ol start="6">
+<li><strong>硬件感知的架构设计</strong></li>
+</ol>
+<p><strong>张量核心（Tensor Core）优化：</strong></p>
+<ul>
+<li>维度必须是8/16的倍数</li>
+<li>混合精度计算的原生支持</li>
+<li>特定的内存访问模式</li>
+</ul>
+<p><strong>内存层次优化：</strong></p>
+<div class="codehilite"><pre><span></span><code>寄存器 &lt; L1 &lt; L2 &lt; HBM &lt; CPU内存
+容量：  小 ←→ 大
+速度：  快 ←→ 慢
+</code></pre></div>
+
+<p>设计原则：</p>
+<ul>
+<li>计算密集 &gt; 内存密集</li>
+<li>数据重用最大化</li>
+<li>避免随机内存访问</li>
+</ul>
+<p><strong>并行策略的效率影响：</strong></p>
+<ul>
+<li><strong>数据并行</strong>：通信在batch维度</li>
+<li><strong>模型并行</strong>：通信在模型维度</li>
+<li><strong>流水线并行</strong>：通信在层之间</li>
+<li><strong>最优组合</strong>：取决于模型大小和集群拓扑</li>
+</ul>
+<ol start="7">
+<li><strong>能耗效率：绿色AI的追求</strong></li>
+</ol>
+<p><strong>计算vs通信的能耗：</strong></p>
+<ul>
+<li>FP16乘法：~0.6 pJ</li>
+<li>32bit内存访问：~100 pJ  </li>
+<li>芯片间通信：~1000 pJ</li>
+</ul>
+<p>启示：本地计算优于远程通信</p>
+<p><strong>模型压缩的能耗收益：</strong></p>
+<ul>
+<li>2倍压缩 → ~1.4倍能耗降低</li>
+<li>非线性关系due to固定开销</li>
+</ul>
+<p><strong>动态电压频率调节（DVFS）：</strong></p>
+<ul>
+<li>推理时降低频率</li>
+<li>在延迟允许范围内节能</li>
+<li>典型节省：20-30%</li>
+</ul>
+<h4 id="210">练习 2.10：设计不同规模的模型配置</h4>
+<p>给定1B、7B、70B参数预算，设计合理的模型配置。</p>
+<details>
+<summary>查看答案</summary>
+<p><strong>模型配置设计：</strong></p>
+<p>| 参数量 | 层数 | d_model | n_heads | d_ff | 词表大小 | d_k |</p>
+<table>
+<thead>
+<tr>
+<th>参数量</th>
+<th>层数</th>
+<th>d_model</th>
+<th>n_heads</th>
+<th>d_ff</th>
+<th>词表大小</th>
+<th>d_k</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1B</td>
+<td>24</td>
+<td>1024</td>
+<td>16</td>
+<td>4096</td>
+<td>32K</td>
+<td>64</td>
+</tr>
+<tr>
+<td>7B</td>
+<td>32</td>
+<td>4096</td>
+<td>32</td>
+<td>11008</td>
+<td>32K</td>
+<td>128</td>
+</tr>
+<tr>
+<td>70B</td>
+<td>80</td>
+<td>8192</td>
+<td>64</td>
+<td>28672</td>
+<td>32K</td>
+<td>128</td>
+</tr>
+</tbody>
+</table>
+<p><strong>设计原则：</strong></p>
+<ol>
+<li>
+<p><strong>层数增长</strong>：次线性增长
+   - 1B→7B：层数×1.33
+   - 7B→70B：层数×2.5
+   - 原因：过深导致优化困难</p>
+</li>
+<li>
+<p><strong>宽度增长</strong>：与参数量更相关
+   - d_model大致与 $N^{0.5}$ 成比例
+   - 保持aspect ratio在合理范围</p>
+</li>
+<li>
+<p><strong>FFN比例</strong>：
+   - 标准是4×，但大模型可以降到3.5×
+   - SwiGLU需要调整：实际隐藏维度 = d_ff × 2/3</p>
+</li>
+<li>
+<p><strong>验证计算：</strong></p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>参数量 ≈ 12 × L × d² (忽略词表)
+1B: 12 × 24 × 1024² ≈ 0.3B
+加上词表(32K × 1024 × 2) ≈ 0.4B
+其他组件 ≈ 0.6B
+总计 ≈ 1B ✓
+</code></pre></div>
+
+<ol start="5">
+<li><strong>效率指标：</strong>
+   - FLOPs/参数比：保持相对恒定
+   - 内存带宽需求：与d_model成正比
+   - 推理延迟：主要由层数决定</li>
+</ol>
+</details>
+<h3 id="256">2.5.6 训练与推理的权衡</h3>
+<p><strong>过度训练（Over-training）的价值：</strong></p>
+<p>LLaMA的insight：训练时多花计算，推理时节省。</p>
+<div class="codehilite"><pre><span></span><code>训练成本：一次性
+推理成本：持续发生
+</code></pre></div>
+
+<p><strong>最优训练长度：</strong></p>
+<ul>
+<li>Chinchilla-optimal：最小化训练损失</li>
+<li>推理-optimal：考虑部署成本</li>
+<li>实践选择：2-4倍Chinchilla</li>
+</ul>
+<p><strong>小模型的优势：</strong></p>
+<ol>
+<li>更低的推理延迟</li>
+<li>更少的内存需求</li>
+<li>更容易部署到边缘</li>
+<li>更低的服务成本</li>
+</ol>
+<h3 id="257-scaling">2.5.7 未来的Scaling趋势</h3>
+<ol>
+<li>
+<p><strong>数据瓶颈：</strong>
+- 高质量文本数据接近枯竭
+- 合成数据的角色？
+- 多模态数据的利用</p>
+</li>
+<li>
+<p><strong>计算效率：</strong>
+- 稀疏模型（MoE）
+- 动态计算
+- 硬件-算法协同设计</p>
+</li>
+<li>
+<p><strong>新的Scaling维度：</strong>
+- 上下文长度
+- 推理时计算
+- 持续学习能力</p>
+</li>
+</ol>
+<p><strong>⚡ 设计选择：</strong> 
+选择模型规模时考虑：</p>
+<ul>
+<li>训练预算 vs 推理预算</li>
+<li>延迟要求</li>
+<li>部署环境</li>
+<li>迭代速度需求</li>
+</ul>
+<p><strong>🔬 研究线索：</strong> </p>
+<ul>
+<li>是否存在Scaling的上限？</li>
+<li>如何设计"数据高效"的架构？</li>
+<li>小模型能否通过其他方式达到大模型的能力？</li>
+</ul>
+<hr />
+<h2 id="26_1"><a name="section6"></a>2.6 评估与分析</h2>
+<p>预训练模型的质量评估是一个多维度的挑战。本节探讨如何全面评估GPT模型的能力、诊断问题并指导改进。</p>
+<h3 id="261-perplexity">2.6.1 困惑度（Perplexity）与其局限</h3>
+<p><strong>困惑度定义：</strong>
+$$PPL = \exp\left(-\frac{1}{N}\sum_{i=1}^{N} \log p(x_i|x_{&lt;i})\right)$$</p>
+<p><strong>直观理解：</strong></p>
+<ul>
+<li>PPL=10意味着模型平均在10个选项中犹豫</li>
+<li>越低越好，但有下限（人类水平约12）</li>
+</ul>
+<p><strong>局限性：</strong></p>
+<ol>
+<li>
+<p><strong>不反映生成质量</strong>
+   - 低PPL ≠ 好的生成
+   - 可能过拟合训练分布</p>
+</li>
+<li>
+<p><strong>对罕见token敏感</strong>
+   - 一个OOV可以爆炸PPL
+   - 需要careful的tokenization</p>
+</li>
+<li>
+<p><strong>领域依赖性强</strong>
+   - 不同领域PPL不可比
+   - 代码vs自然语言差异巨大</p>
+</li>
+</ol>
+<h3 id="262-zero-shot">2.6.2 Zero-shot评估基准</h3>
+<p><strong>主要基准测试：</strong></p>
+<p>| 基准 | 任务类型 | 评估内容 | 典型指标 |</p>
+<table>
+<thead>
+<tr>
+<th>基准</th>
+<th>任务类型</th>
+<th>评估内容</th>
+<th>典型指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HellaSwag</td>
+<td>常识推理</td>
+<td>完成句子</td>
+<td>准确率</td>
+</tr>
+<tr>
+<td>MMLU</td>
+<td>多领域知识</td>
+<td>57个学科</td>
+<td>准确率</td>
+</tr>
+<tr>
+<td>HumanEval</td>
+<td>代码生成</td>
+<td>Python函数</td>
+<td>pass@k</td>
+</tr>
+<tr>
+<td>GSM8K</td>
+<td>数学推理</td>
+<td>小学数学题</td>
+<td>准确率</td>
+</tr>
+<tr>
+<td>TruthfulQA</td>
+<td>真实性</td>
+<td>事实准确性</td>
+<td>真实率</td>
+</tr>
+</tbody>
+</table>
+<p><strong>评估协议：</strong></p>
+<h3 id="263-few-shot-vs-zero-shot">2.6.3 Few-shot vs Zero-shot</h3>
+<p><strong>Few-shot提示的影响：</strong></p>
+<div class="codehilite"><pre><span></span><code>Zero-shot: &quot;Translate to French: Hello&quot;
+
+5-shot: 
+&quot;English: Hello
+French: Bonjour
+
+English: Thank you  
+French: Merci
+
+...
+
+English: Good morning
+French: [模型预测]&quot;
+</code></pre></div>
+
+<p><strong>性能差异分析：</strong></p>
+<ul>
+<li>小模型：few-shot &gt;&gt; zero-shot</li>
+<li>大模型：差距缩小</li>
+<li>175B+：部分任务zero-shot够用</li>
+</ul>
+<p><strong>示例选择的影响：</strong></p>
+<ol>
+<li><strong>相关性</strong>：相似示例 &gt; 随机示例</li>
+<li><strong>多样性</strong>：覆盖不同模式</li>
+<li><strong>顺序</strong>：近因效应存在</li>
+<li><strong>格式</strong>：一致性关键</li>
+</ol>
+<h3 id="264">2.6.4 在线评估与人类偏好</h3>
+<p><strong>A/B测试框架：</strong></p>
+<p><strong>人类评估维度：</strong></p>
+<ol>
+<li><strong>有用性（Helpfulness）</strong></li>
+<li><strong>准确性（Accuracy）</strong></li>
+<li><strong>安全性（Safety）</strong></li>
+<li><strong>流畅性（Fluency）</strong></li>
+<li><strong>创造性（Creativity）</strong></li>
+</ol>
+<h3 id="265">2.6.5 诊断工具与分析方法</h3>
+<ol>
+<li><strong>注意力可视化</strong></li>
+</ol>
+<p><strong>发现的模式：</strong></p>
+<ul>
+<li>位置偏差</li>
+<li>语法结构</li>
+<li>长程依赖</li>
+</ul>
+<ol start="2">
+<li><strong>探针（Probing）分析</strong></li>
+</ol>
+<p><strong>可探测的知识：</strong></p>
+<ul>
+<li>词性标注</li>
+<li>句法结构  </li>
+<li>语义角色</li>
+<li>事实知识</li>
+</ul>
+<ol start="3">
+<li><strong>逐层分析</strong>
+- 早期层：词汇/语法
+- 中间层：句法/语义
+- 后期层：任务特定</li>
+</ol>
+<h3 id="266">2.6.6 常见问题诊断</h3>
+<ol>
+<li><strong>重复生成</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code>症状：the the the the...
+原因：
+
+- 温度太低
+- 训练数据有重复
+- 位置编码问题
+</code></pre></div>
+
+<ol start="2">
+<li><strong>遗忘（对长文本）</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code>症状：忽略早期上下文
+诊断：
+
+- 绘制注意力距离分布
+- 测试不同位置的信息提取
+</code></pre></div>
+
+<ol start="3">
+<li><strong>幻觉（Hallucination）</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code>类型：
+
+- 事实性幻觉：错误的事实
+- 忠实性幻觉：与上下文矛盾
+
+量化：
+
+- 事实核查
+- 一致性检测
+</code></pre></div>
+
+<h4 id="211_1">练习 2.11：设计评估协议</h4>
+<p>为一个新的应用场景（如教育辅导）设计完整的评估协议。</p>
+<details>
+<summary>查看答案</summary>
+<p><strong>教育辅导场景评估协议：</strong></p>
+<ol>
+<li>
+<p><strong>核心能力维度：</strong>
+   - <strong>知识准确性</strong>：答案的正确性
+   - <strong>教学效果</strong>：解释的清晰度
+   - <strong>适应性</strong>：根据学生水平调整
+   - <strong>互动性</strong>：引导式教学能力
+   - <strong>安全性</strong>：内容适龄性</p>
+</li>
+<li>
+<p><strong>评估数据集构建：</strong></p>
+</li>
+<li>
+<p><strong>自动化指标：</strong>
+   - 知识准确率
+   - 解释步骤完整性
+   - 难度递进合理性
+   - 错误识别率</p>
+</li>
+<li>
+<p><strong>人工评估：</strong>
+   - 教师评分（专业性）
+   - 学生反馈（易懂性）
+   - 家长审核（适宜性）</p>
+</li>
+<li>
+<p><strong>纵向跟踪：</strong>
+   - 学生进步情况
+   - 知识保持率
+   - 学习兴趣变化</p>
+</li>
+<li>
+<p><strong>A/B测试设计：</strong></p>
+</li>
+</ol>
+</details>
+<h3 id="267">2.6.7 评估的未来方向</h3>
+<ol>
+<li>
+<p><strong>动态基准测试</strong>
+- 防止过拟合benchmark
+- 自动生成新测试
+- 对抗性评估</p>
+</li>
+<li>
+<p><strong>能力分解</strong>
+- 不只是总分
+- 细粒度能力图谱
+- 因果分析</p>
+</li>
+<li>
+<p><strong>效率-性能权衡</strong>
+- Pareto前沿分析
+- 不同资源约束下的表现
+- 绿色AI指标</p>
+</li>
+</ol>
+<p><strong>🔬 研究线索：</strong> </p>
+<ul>
+<li>如何评估创造性和新颖性？</li>
+<li>是否存在"通用"的评估指标？</li>
+<li>如何检测benchmark contamination？</li>
+</ul>
+<h3 id="268">2.6.8 本章总结</h3>
+<p>本章深入探讨了GPT预训练的核心技术：</p>
+<ol>
+<li><strong>自回归建模</strong>：简单yet powerful的范式</li>
+<li><strong>预训练目标</strong>：各种变体的权衡</li>
+<li><strong>数据工程</strong>：质量&gt;数量，但规模仍重要</li>
+<li><strong>训练技术</strong>：稳定性和效率并重</li>
+<li><strong>Scaling法则</strong>：指导资源分配</li>
+<li><strong>评估方法</strong>：多维度、多粒度</li>
+</ol>
+<p>关键洞察：</p>
+<ul>
+<li>预训练是基础，但不是全部</li>
+<li>工程和算法同等重要</li>
+<li>评估要全面且持续演进</li>
+</ul>
+<p>下一章，我们将探讨如何通过微调技术将预训练模型转化为实用系统。</p>
+<hr />
+<p><a href="index.html">← 返回目录</a> | <a href="#section5">上一节：模型规模与计算效率 →</a> | <a href="chapter3.html">下一章：微调技术与对齐方法 →</a></p>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter1.html" class="nav-link prev">← 第1章: Transformer架构深度剖析</a><a href="chapter3.html" class="nav-link next">第3章：微调技术与对齐方法 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

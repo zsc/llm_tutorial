@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第9章：训练基础设施II：有损压缩与量化</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">大型语言模型(LLM)设计与实现教程</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第1章: Transformer架构深度剖析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第2章: GPT预训练原理与设计选择</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第3章：微调技术与对齐方法</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第4章：强化学习与RLHF深度解析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第5章：长思维链与推理能力培养</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第6章：最新架构创新</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第7章：数据工程：预训练、后训练与合成数据</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第8章：训练基础设施I：无损加速技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第9章：训练基础设施II：有损压缩与量化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter10.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第10章：推理优化与系统设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第11章：可解释AI与模型内部机制</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第12章：评测基准与实际应用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">LLM tutorial 项目说明</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="README.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">语言模型全面教程</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="9ii">第9章：训练基础设施II：有损压缩与量化</h1>
+<p>在追求更高效率的道路上，有损压缩技术提供了另一个维度的优化空间。通过适度牺牲精度来换取显著的计算和存储效率提升，这些技术在实际部署中发挥着关键作用。本章深入探讨量化、剪枝、知识蒸馏等有损压缩技术的原理和实践。</p>
+<h2 id="_1">本章目标</h2>
+<ul>
+<li>理解量化训练和推理的基本原理</li>
+<li>掌握模型剪枝的各种策略</li>
+<li>学习知识蒸馏的方法和应用</li>
+<li>了解低秩分解和结构化压缩</li>
+<li>探索神经架构搜索在模型压缩中的应用</li>
+<li>实践端到端的模型压缩流程</li>
+</ul>
+<h2 id="91">9.1 量化技术基础</h2>
+<p>量化是将高精度数值映射到低精度表示的过程，是模型压缩最常用的技术之一。</p>
+<h3 id="911">9.1.1 量化理论基础</h3>
+<p><strong>量化函数定义</strong>：</p>
+<p>对于输入 $x \in \mathbb{R}$ ，量化函数 $Q$ 将其映射到离散集合：</p>
+<p>$$Q(x) = s \cdot \text{clamp}(\text{round}(\frac{x}{s}), q_{min}, q_{max})$$
+其中：</p>
+<ul>
+<li>$s$ 是缩放因子（scale）</li>
+<li>$q_{min}, q_{max}$ 是量化范围</li>
+<li>round是取整函数</li>
+</ul>
+<p><strong>量化误差分析</strong>：</p>
+<p>量化误差：
+$$e = x - Q(x)$$
+在均匀量化下，误差上界：
+$$|e| \leq \frac{s}{2}$$
+信噪比（SNR）：
+$$\text{SNR} = 10\log_{10}\left(\frac{\mathbb{E}[x^2]}{\mathbb{E}[e^2]}\right)$$</p>
+<h3 id="912">9.1.2 量化方案分类</h3>
+<p><strong>对称vs非对称量化</strong>：</p>
+<ol>
+<li>
+<p><strong>对称量化</strong>：
+$$Q(x) = s \cdot \text{clamp}(\text{round}(\frac{x}{s}), -2^{b-1}, 2^{b-1}-1)$$
+零点固定在0，适合权重量化。</p>
+</li>
+<li>
+<p><strong>非对称量化</strong>：
+$$Q(x) = s \cdot (\text{clamp}(\text{round}(\frac{x}{s} + z), 0, 2^b-1) - z)$$
+其中 $z$ 是零点（zero point），适合激活量化。</p>
+</li>
+</ol>
+<p><strong>均匀vs非均匀量化</strong>：</p>
+<ol>
+<li>
+<p><strong>均匀量化</strong>：
+   量化级别均匀分布，硬件友好。</p>
+</li>
+<li>
+<p><strong>非均匀量化</strong>：
+   - 对数量化：集中在0附近
+   - 学习型量化：自适应量化级别
+   - K-means量化：聚类中心作为量化值</p>
+</li>
+</ol>
+<h3 id="913-qat">9.1.3 量化感知训练（QAT）</h3>
+<p><strong>前向传播</strong>：</p>
+<p>模拟量化过程：
+$$\hat{w} = Q(w)$$
+$$y = f(\hat{w}, x)$$
+<strong>反向传播</strong>：</p>
+<p>直通估计器（STE）：
+$$\frac{\partial L}{\partial w} = \frac{\partial L}{\partial \hat{w}}$$
+即量化函数的梯度近似为1。</p>
+<p><strong>量化参数学习</strong>：</p>
+<p>可学习的scale和zero point：
+$$\frac{\partial L}{\partial s} = \frac{\partial L}{\partial \hat{w}} \cdot \frac{\partial \hat{w}}{\partial s}$$</p>
+<h3 id="914-ptq">9.1.4 训练后量化（PTQ）</h3>
+<p><strong>校准过程</strong>：</p>
+<ol>
+<li>
+<p><strong>收集统计信息</strong>：
+   在代表性数据上运行，收集激活分布。</p>
+</li>
+<li>
+<p><strong>确定量化参数</strong>：
+   - MinMax： $s = \frac{\max(x) - \min(x)}{2^b - 1}$
+   - Percentile：去除异常值
+   - KL散度：最小化量化前后分布差异</p>
+</li>
+</ol>
+<p><strong>逐层优化</strong>：
+$$\min_{\theta_q} ||W \cdot X - Q(W; \theta_q) \cdot X||_F^2$$
+其中 $\theta_q$ 是量化参数。</p>
+<h3 id="915">9.1.5 混合精度量化</h3>
+<p><strong>层级敏感度分析</strong>：</p>
+<p>不同层对量化的敏感度不同：
+$$S_l = \frac{||\Delta L||}{||\Delta W_l||}$$
+敏感层使用高bit，不敏感层使用低bit。</p>
+<p><strong>自动混合精度搜索</strong>：</p>
+<p>搜索空间：每层的bit数
+约束：总bit数或模型大小
+目标：最小化精度损失
+$$\min_{\{b_l\}} L(Q(W; \{b_l\})) \text{ s.t. } \sum_l |W_l| \cdot b_l \leq B$$</p>
+<h3 id="916">9.1.6 特殊量化技术</h3>
+<p><strong>二值化网络（BNN）</strong>：</p>
+<p>权重和激活都量化到{-1, +1}：
+$$\text{sign}(x) = \begin{cases}
++1 &amp; \text{if } x \geq 0 \\
+-1 &amp; \text{otherwise}
+\end{cases}$$
+计算变为XNOR和popcount操作。</p>
+<p><strong>三值化网络（TWN）</strong>：</p>
+<p>权重量化到{-1, 0, +1}：
+$$w_t = \begin{cases}
++\alpha &amp; \text{if } w &gt; \Delta \\
+0 &amp; \text{if } |w| \leq \Delta \\
+-\alpha &amp; \text{if } w &lt; -\Delta
+\end{cases}$$
+保留了稀疏性。</p>
+<h3 id="91_1">练习 9.1</h3>
+<p>设计一个端到端的量化系统：</p>
+<ol>
+<li>
+<p><strong>量化方案设计</strong>（25分）：
+   - 分析不同层的量化需求
+   - 设计混合精度策略
+   - 优化量化参数</p>
+</li>
+<li>
+<p><strong>训练集成</strong>（25分）：
+   - 实现QAT训练流程
+   - 设计梯度处理策略
+   - 处理batch normalization</p>
+</li>
+<li>
+<p><strong>推理优化</strong>（25分）：
+   - 实现INT8推理
+   - 优化量化kernel
+   - 处理溢出问题</p>
+</li>
+<li>
+<p><strong>精度恢复</strong>（25分）：
+   - 设计校准方法
+   - 实现精度补偿
+   - 评估量化效果</p>
+</li>
+</ol>
+<details>
+<summary>练习答案</summary>
+<p><strong>端到端量化系统设计</strong>：</p>
+<ol>
+<li><strong>自适应量化方案</strong>：</li>
+</ol>
+<p>层敏感度分析：</p>
+<ul>
+<li>第一层和最后一层：8-bit（更敏感）</li>
+<li>中间层：4-bit或2-bit</li>
+<li>注意力层：6-bit（精度要求高）</li>
+</ul>
+<p>动态范围调整：</p>
+<ul>
+<li>激活：per-channel非对称量化</li>
+<li>权重：per-channel对称量化</li>
+<li>运行时统计更新</li>
+</ul>
+<ol start="2">
+<li><strong>QAT训练框架</strong>：</li>
+</ol>
+<p>量化调度：</p>
+<div class="codehilite"><pre><span></span><code>前10%训练：全精度
+10-50%训练：逐步引入量化
+50-90%训练：完全量化训练
+90-100%训练：固定量化参数微调
+</code></pre></div>
+
+<p>梯度缩放：</p>
+<ul>
+<li>低bit层梯度放大</li>
+<li>自适应clip范围</li>
+<li>移动平均更新</li>
+</ul>
+<ol start="3">
+<li><strong>高效推理实现</strong>：</li>
+</ol>
+<p>INT8 GEMM优化：</p>
+<ul>
+<li>使用SIMD指令</li>
+<li>内存对齐访问</li>
+<li>融合量化/反量化</li>
+</ul>
+<p>溢出处理：</p>
+<ul>
+<li>饱和算术</li>
+<li>动态rescale</li>
+<li>分块计算</li>
+</ul>
+<ol start="4">
+<li><strong>精度保持技术</strong>：</li>
+</ol>
+<p>知识蒸馏辅助：</p>
+<ul>
+<li>全精度教师指导</li>
+<li>中间层匹配</li>
+<li>温度调节</li>
+</ul>
+<p>偏差校正：</p>
+<ul>
+<li>批统计校正</li>
+<li>激活分布匹配</li>
+<li>逐层精调</li>
+</ul>
+<p>这个系统能够实现4-8倍的模型压缩，同时保持精度损失在1%以内。</p>
+</details>
+<h3 id="_2">⚡ 设计选择</h3>
+<ol>
+<li><strong>量化bit数</strong>：越低压缩率越高但精度损失越大</li>
+<li><strong>对称vs非对称</strong>：对称简单但可能浪费表示范围</li>
+<li><strong>静态vs动态</strong>：静态量化快，动态量化准</li>
+<li><strong>逐层vs全局</strong>：逐层灵活，全局简单</li>
+</ol>
+<h3 id="_3">🔬 研究方向</h3>
+<ol>
+<li><strong>可微分量化</strong>：使量化函数真正可微</li>
+<li><strong>硬件协同设计</strong>：与专用量化硬件协同优化</li>
+<li><strong>自适应量化</strong>：运行时动态调整量化策略</li>
+<li><strong>极低bit量化</strong>：探索1-2 bit的极限</li>
+</ol>
+<hr />
+<p><a href="chapter8.html">← 上一章：训练基础设施I</a> | <a href="#section2">下一节：模型剪枝技术 →</a></p>
+<h2 id="92">9.2 模型剪枝技术</h2>
+<p>剪枝通过移除冗余的连接或神经元来压缩模型。本节探讨各种剪枝策略及其实现。</p>
+<h3 id="921">9.2.1 剪枝理论基础</h3>
+<p><strong>稀疏性与压缩</strong>：</p>
+<p>模型稀疏度定义：
+$$\text{Sparsity} = \frac{\text{Number of zeros}}{\text{Total parameters}}$$
+理论压缩率：
+$$\text{Compression Ratio} = \frac{1}{1 - \text{Sparsity}}$$
+<strong>剪枝准则</strong>：</p>
+<ol>
+<li>
+<p><strong>基于幅度</strong>：
+$$\text{Importance}(w) = |w|$$</p>
+</li>
+<li>
+<p><strong>基于梯度</strong>：
+$$\text{Importance}(w) = |w \cdot \frac{\partial L}{\partial w}|$$</p>
+</li>
+<li>
+<p><strong>基于Hessian</strong>：
+$$\text{Importance}(w) = \frac{1}{2}w^2 H_{ii}$$
+其中 $H_{ii}$ 是Hessian对角元素。</p>
+</li>
+</ol>
+<h3 id="922">9.2.2 非结构化剪枝</h3>
+<p><strong>细粒度剪枝</strong>：</p>
+<p>任意位置的权重都可以被剪枝：</p>
+<div class="codehilite"><pre><span></span><code>对每个权重<span class="nv">w</span>：
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="o">|</span><span class="nv">w</span><span class="o">|</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="nv">threshold</span>:
+<span class="w">    </span><span class="nv">w</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+</code></pre></div>
+
+<p><strong>迭代剪枝</strong>：</p>
+<ol>
+<li><strong>训练</strong>：正常训练模型</li>
+<li><strong>剪枝</strong>：移除不重要权重</li>
+<li><strong>微调</strong>：恢复精度</li>
+<li><strong>重复</strong>：直到达到目标稀疏度</li>
+</ol>
+<p><strong>动态稀疏训练</strong>：</p>
+<p>训练过程中动态调整稀疏模式：
+$$\text{Mask}_t = \text{TopK}(|W_t|, (1-s) \cdot N)$$
+其中 $s$ 是目标稀疏度。</p>
+<h3 id="923">9.2.3 结构化剪枝</h3>
+<p><strong>通道剪枝</strong>：</p>
+<p>整个卷积通道被移除：
+$$Y = \sum_{c \in \mathcal{C}} W_c * X_c$$
+其中 $\mathcal{C}$ 是保留的通道集合。</p>
+<p><strong>评估指标</strong>：</p>
+<ol>
+<li>
+<p><strong>Taylor展开</strong>：
+$$\Delta L \approx \sum_{c} \frac{\partial L}{\partial W_c} \Delta W_c$$</p>
+</li>
+<li>
+<p><strong>特征图范数</strong>：
+$$\text{Importance}_c = ||Y_c||_2$$</p>
+</li>
+<li>
+<p><strong>互信息</strong>：
+   评估通道间的冗余度。</p>
+</li>
+</ol>
+<p><strong>块稀疏剪枝</strong>：</p>
+<p>将权重分块，整块剪枝：
+$$W = \begin{bmatrix}
+B_{11} &amp; B_{12} &amp; \cdots \\
+B_{21} &amp; B_{22} &amp; \cdots \\
+\vdots &amp; \vdots &amp; \ddots
+\end{bmatrix}$$
+硬件友好，可以利用稀疏矩阵运算。</p>
+<h3 id="924">9.2.4 自动剪枝策略</h3>
+<p><strong>强化学习剪枝</strong>：</p>
+<p>将剪枝建模为序列决策：</p>
+<ul>
+<li>状态：当前模型配置</li>
+<li>动作：剪枝某层</li>
+<li>奖励：精度和效率的平衡
+$$R = \alpha \cdot \text{Accuracy} - \beta \cdot \text{FLOPs}$$
+<strong>可微分剪枝</strong>：</li>
+</ul>
+<p>引入可学习的门控：
+$$W_{effective} = W \odot \sigma(\alpha)$$
+其中 $\alpha$ 是可学习参数， $\sigma$ 是sigmoid函数。</p>
+<p><strong>进化算法</strong>：</p>
+<p>使用遗传算法搜索最优剪枝模式：</p>
+<ol>
+<li>初始化：随机剪枝方案</li>
+<li>评估：训练并测试</li>
+<li>选择：保留优秀个体</li>
+<li>变异：修改剪枝模式</li>
+<li>迭代：直到收敛</li>
+</ol>
+<h3 id="925">9.2.5 剪枝与稀疏训练</h3>
+<p><strong>稀疏正则化</strong>：</p>
+<p>训练时加入稀疏诱导项：
+$$L_{total} = L_{task} + \lambda \sum_i ||W_i||_1$$
+或使用group lasso促进结构化稀疏：
+$$L_{total} = L_{task} + \lambda \sum_g ||W_g||_2$$
+<strong>动态稀疏网络</strong>：</p>
+<ol>
+<li><strong>RigL（Rigged Lottery）</strong>：
+   定期更新稀疏拓扑：</li>
+</ol>
+<ul>
+<li>移除最小权重</li>
+<li>根据梯度添加新连接</li>
+</ul>
+<ol start="2">
+<li><strong>SET（Sparse Evolutionary Training）</strong>：
+   进化式拓扑更新。</li>
+</ol>
+<h3 id="926">9.2.6 剪枝后的优化</h3>
+<p><strong>稀疏存储格式</strong>：</p>
+<ol>
+<li>
+<p><strong>COO格式</strong>：
+   存储(row, col, value)三元组</p>
+</li>
+<li>
+<p><strong>CSR格式</strong>：
+   压缩行存储，适合行访问</p>
+</li>
+<li>
+<p><strong>Block稀疏</strong>：
+   固定大小块，硬件友好</p>
+</li>
+</ol>
+<p><strong>稀疏计算优化</strong>：</p>
+<ol>
+<li>
+<p><strong>稀疏GEMM</strong>：
+   跳过零元素计算</p>
+</li>
+<li>
+<p><strong>向量化</strong>：
+   SIMD指令处理非零块</p>
+</li>
+<li>
+<p><strong>负载均衡</strong>：
+   动态分配计算任务</p>
+</li>
+</ol>
+<h3 id="92_1">练习 9.2</h3>
+<p>设计一个自动化剪枝系统：</p>
+<ol>
+<li>
+<p><strong>剪枝策略</strong>（25分）：
+   - 设计重要性评估方法
+   - 实现渐进式剪枝
+   - 支持多种剪枝粒度</p>
+</li>
+<li>
+<p><strong>稀疏训练</strong>（25分）：
+   - 实现动态稀疏更新
+   - 设计稀疏正则化
+   - 优化训练效率</p>
+</li>
+<li>
+<p><strong>硬件适配</strong>（25分）：
+   - 选择合适的稀疏格式
+   - 实现高效稀疏kernel
+   - 评估实际加速比</p>
+</li>
+<li>
+<p><strong>精度保持</strong>（25分）：
+   - 设计恢复训练策略
+   - 实现知识蒸馏辅助
+   - 评估剪枝效果</p>
+</li>
+</ol>
+<details>
+<summary>练习答案</summary>
+<p><strong>自动化剪枝系统设计</strong>：</p>
+<ol>
+<li><strong>多粒度剪枝框架</strong>：</li>
+</ol>
+<p>重要性评估：</p>
+<div class="codehilite"><pre><span></span><code>细粒度：|w| <span class="gs">* |grad_w|</span>
+<span class="gs">通道级：Σ|w_channel| *</span> Σ|activation|
+层级：相对精度损失
+</code></pre></div>
+
+<p>渐进策略：</p>
+<ul>
+<li>指数衰减：sparsity = 1 - (1-s_final)^(t/T)</li>
+<li>余弦退火：周期性剪枝和恢复</li>
+<li>自适应：基于验证集性能</li>
+</ul>
+<ol start="2">
+<li><strong>高效稀疏训练</strong>：</li>
+</ol>
+<p>拓扑更新算法：</p>
+<div class="codehilite"><pre><span></span><code>每K步：
+
+1. 计算所有权重重要性
+2. 移除bottom 5%
+3. 基于梯度幅度添加top 5%
+4. 保持总稀疏度不变
+</code></pre></div>
+
+<p>正则化设计：</p>
+<ul>
+<li>L0正则：直接约束非零个数</li>
+<li>Hoyer正则：平衡L1和L2</li>
+<li>结构化group lasso</li>
+</ul>
+<ol start="3">
+<li><strong>硬件优化实现</strong>：</li>
+</ol>
+<p>稀疏格式选择：</p>
+<ul>
+<li>&lt;90%稀疏：使用dense计算</li>
+<li>90-95%：block稀疏(4x4或8x8)</li>
+<li>
+<blockquote>
+<p>95%：CSR格式</p>
+</blockquote>
+</li>
+</ul>
+<p>计算优化：</p>
+<ul>
+<li>稀疏卷积：im2col + 稀疏GEMM</li>
+<li>稀疏注意力：块对角模式</li>
+<li>混合精度：稀疏INT8</li>
+</ul>
+<ol start="4">
+<li><strong>精度恢复机制</strong>：</li>
+</ol>
+<p>三阶段恢复：</p>
+<div class="codehilite"><pre><span></span><code>阶段1：全精度预训练
+阶段2：渐进剪枝 + 蒸馏
+阶段3：固定拓扑微调
+</code></pre></div>
+
+<p>蒸馏策略：</p>
+<ul>
+<li>特征匹配：中间层对齐</li>
+<li>注意力迁移：注意力图匹配</li>
+<li>响应匹配：logit级别对齐</li>
+</ul>
+<p>这个系统可以实现10-100倍的稀疏度，在特定硬件上获得3-5倍实际加速。</p>
+</details>
+<h3 id="_4">⚡ 设计选择</h3>
+<ol>
+<li><strong>结构化vs非结构化</strong>：结构化硬件友好，非结构化压缩率高</li>
+<li><strong>静态vs动态</strong>：静态剪枝简单，动态剪枝效果好</li>
+<li><strong>一次性vs渐进式</strong>：一次性快速，渐进式精度保持好</li>
+<li><strong>全局vs局部</strong>：全局剪枝均衡，局部剪枝灵活</li>
+</ol>
+<h3 id="_5">🔬 研究方向</h3>
+<ol>
+<li><strong>硬件感知剪枝</strong>：考虑实际硬件特性的剪枝</li>
+<li><strong>自适应稀疏</strong>：根据输入动态调整稀疏模式</li>
+<li><strong>端到端稀疏</strong>：从头训练稀疏网络</li>
+<li><strong>理论分析</strong>：稀疏网络的表达能力研究</li>
+</ol>
+<hr />
+<p><a href="#section1">← 上一节：量化技术基础</a> | <a href="#section3">下一节：知识蒸馏 →</a></p>
+<h2 id="93">9.3 知识蒸馏</h2>
+<p>知识蒸馏通过让小模型（学生）学习大模型（教师）的行为来实现模型压缩。本节探讨各种蒸馏技术。</p>
+<h3 id="931">9.3.1 蒸馏基本原理</h3>
+<p><strong>基础蒸馏损失</strong>：
+$$L_{KD} = \alpha L_{CE}(y, p_s) + (1-\alpha) L_{KL}(p_t^T, p_s^T)$$
+其中：</p>
+<ul>
+<li>$p_s$ ：学生模型输出</li>
+<li>$p_t$ ：教师模型输出</li>
+<li>$T$ ：温度参数</li>
+<li>$p^T = \text{softmax}(z/T)$</li>
+</ul>
+<p><strong>温度的作用</strong>：</p>
+<p>高温度使分布更平滑，暴露更多"暗知识"：
+$$p_i^T = \frac{\exp(z_i/T)}{\sum_j \exp(z_j/T)}$$
+当 $T \to \infty$ ，分布趋于均匀；当 $T \to 0$ ，退化为one-hot。</p>
+<h3 id="932">9.3.2 特征蒸馏</h3>
+<p><strong>中间层匹配</strong>：</p>
+<p>不仅匹配最终输出，还匹配中间表示：
+$$L_{feature} = \sum_{l} \lambda_l ||\phi(F_s^l) - F_t^l||_2^2$$
+其中 $\phi$ 是特征变换函数（如1x1卷积）。</p>
+<p><strong>注意力迁移</strong>：</p>
+<p>迁移注意力图：
+$$L_{AT} = \sum_{l} ||\frac{Q_s^l K_s^{lT}}{\sqrt{d}} - \frac{Q_t^l K_t^{lT}}{\sqrt{d}}||_F^2$$
+<strong>流形匹配</strong>：</p>
+<p>保持样本间的相对关系：
+$$L_{manifold} = ||G_s - G_t||_F^2$$
+其中 $G_{ij} = \text{sim}(f_i, f_j)$ 是特征相似度矩阵。</p>
+<h3 id="933">9.3.3 关系型知识蒸馏</h3>
+<p><strong>样本关系建模</strong>：</p>
+<p>学习样本间的关系而非个体预测：
+$$L_{RKD} = ||\psi(t_i, t_j) - \psi(s_i, s_j)||^2$$
+关系函数 $\psi$ 可以是：</p>
+<ul>
+<li>距离： $||f_i - f_j||_2$</li>
+<li>角度： $\cos(f_i, f_j)$</li>
+<li>高阶：多个样本的关系</li>
+</ul>
+<p><strong>结构化知识</strong>：</p>
+<p>保持批内样本的结构：
+$$L_{struct} = ||S_t - S_s||_F^2$$
+其中 $S$ 是相似度矩阵或其他结构表示。</p>
+<h3 id="934">9.3.4 自蒸馏与相互学习</h3>
+<p><strong>自蒸馏</strong>：</p>
+<p>模型蒸馏自己的ensemble：
+$$p_{teacher} = \frac{1}{K}\sum_{k=1}^K p_{\theta_k}$$
+其中 $\theta_k$ 是不同checkpoint或dropout采样。</p>
+<p><strong>深度相互学习（DML）</strong>：</p>
+<p>多个学生模型相互学习：
+$$L_i = L_{CE}(y, p_i) + \sum_{j \neq i} L_{KL}(p_j, p_i)$$
+<strong>在线蒸馏</strong>：</p>
+<p>教师和学生同时训练：
+$$L_{total} = L_{teacher} + L_{student} + \lambda L_{KD}$$</p>
+<h3 id="935">9.3.5 渐进式蒸馏</h3>
+<p><strong>逐层蒸馏</strong>：</p>
+<p>从底层到顶层逐步蒸馏：</p>
+<div class="codehilite"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="n">layer</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nl">layers</span><span class="p">:</span>
+<span class="w">    </span><span class="n">freeze</span><span class="p">(</span><span class="n">previous_layers</span><span class="p">)</span>
+<span class="w">    </span><span class="n">train</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span><span class="w"> </span><span class="n">match_teacher</span><span class="o">[</span><span class="n">layer</span><span class="o">]</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>课程蒸馏</strong>：</p>
+<p>从易到难的样本顺序：
+$$w_i^{(t)} = \begin{cases}
+1 &amp; \text{if } \text{difficulty}(x_i) &lt; \theta^{(t)} \\
+0 &amp; \text{otherwise}
+\end{cases}$$
+<strong>助教网络</strong>：</p>
+<p>引入中等规模的助教：
+$$\text{Teacher} \xrightarrow{KD} \text{TA} \xrightarrow{KD} \text{Student}$$</p>
+<h3 id="936">9.3.6 任务特定蒸馏</h3>
+<p><strong>语言模型蒸馏</strong>：</p>
+<ol>
+<li>
+<p><strong>词级蒸馏</strong>：
+   匹配每个位置的词分布</p>
+</li>
+<li>
+<p><strong>句级蒸馏</strong>：
+   匹配整句的表示</p>
+</li>
+<li>
+<p><strong>任务蒸馏</strong>：
+   在下游任务上蒸馏</p>
+</li>
+</ol>
+<p><strong>序列生成蒸馏</strong>：
+$$L_{seq} = -\sum_t \sum_v p_t^{teacher}(v) \log p_t^{student}(v)$$
+处理exposure bias：</p>
+<ul>
+<li>计划采样</li>
+<li>强化学习微调</li>
+</ul>
+<h3 id="93_1">练习 9.3</h3>
+<p>设计一个综合蒸馏系统：</p>
+<ol>
+<li>
+<p><strong>蒸馏策略</strong>（25分）：
+   - 设计多层次蒸馏
+   - 选择合适的温度
+   - 平衡各项损失</p>
+</li>
+<li>
+<p><strong>架构适配</strong>（25分）：
+   - 处理师生架构差异
+   - 设计特征映射
+   - 优化计算效率</p>
+</li>
+<li>
+<p><strong>训练优化</strong>（25分）：
+   - 设计训练策略
+   - 实现数据增强
+   - 优化收敛速度</p>
+</li>
+<li>
+<p><strong>评估体系</strong>（25分）：
+   - 设计评估指标
+   - 分析知识迁移
+   - 对比不同方法</p>
+</li>
+</ol>
+<details>
+<summary>练习答案</summary>
+<p><strong>综合蒸馏系统设计</strong>：</p>
+<ol>
+<li><strong>分层蒸馏策略</strong>：</li>
+</ol>
+<p>多层次损失：</p>
+<div class="codehilite"><pre><span></span><code>L_total = L_task +                    # 任务损失
+         α₁L_logit +                  # Logit匹配
+         α₂L_feature +                # 特征匹配
+         α₃L_attention +              # 注意力匹配
+         α₄L_relation                 # 关系匹配
+</code></pre></div>
+
+<p>温度调度：</p>
+<ul>
+<li>初期：T=5（软目标）</li>
+<li>中期：T=3（平衡）</li>
+<li>后期：T=1（硬目标）</li>
+</ul>
+<p>损失权重自适应：
+   基于验证集表现动态调整各项权重</p>
+<ol start="2">
+<li><strong>异构架构桥接</strong>：</li>
+</ol>
+<p>特征适配器：</p>
+<div class="codehilite"><pre><span></span><code>教师(d_t) → 投影层 → 学生(d_s)
+
+<span class="k">-</span> 线性投影：W ∈ R^{d_s × d_t}
+<span class="k">-</span> 非线性：1x1卷积 + ReLU
+<span class="k">-</span> 注意力：cross-attention
+</code></pre></div>
+
+<p>层对齐策略：</p>
+<ul>
+<li>均匀映射：每k个教师层对应1个学生层</li>
+<li>重要性加权：关键层多次使用</li>
+<li>自动搜索：可学习的对齐</li>
+</ul>
+<ol start="3">
+<li><strong>高效训练框架</strong>：</li>
+</ol>
+<p>三阶段训练：</p>
+<div class="codehilite"><pre><span></span><code>阶段1：教师预计算
+
+- 缓存所有中间输出
+- 离线保存注意力图
+
+阶段2：学生快速训练
+
+- 大batch + 混合精度
+- 梯度累积
+
+阶段3：联合微调
+
+- 在线蒸馏
+- 任务特定调整
+</code></pre></div>
+
+<p>数据增强：</p>
+<ul>
+<li>对抗样本：提高鲁棒性</li>
+<li>mixup：平滑决策边界</li>
+<li>伪标签：利用无标签数据</li>
+</ul>
+<ol start="4">
+<li><strong>全面评估体系</strong>：</li>
+</ol>
+<p>性能指标：</p>
+<ul>
+<li>压缩率：参数量/FLOPs减少</li>
+<li>精度保持：相对/绝对性能</li>
+<li>推理速度：实际加速比</li>
+</ul>
+<p>知识迁移分析：</p>
+<ul>
+<li>激活相似度：CKA/CCA分析</li>
+<li>决策边界：可视化对比</li>
+<li>错误模式：错误相关性</li>
+</ul>
+<p>消融实验：</p>
+<ul>
+<li>各组件贡献</li>
+<li>超参数敏感性</li>
+<li>扩展性测试</li>
+</ul>
+<p>这个系统能够实现3-10倍压缩，保持90-95%的教师模型性能。</p>
+</details>
+<h3 id="_6">⚡ 设计选择</h3>
+<ol>
+<li><strong>在线vs离线</strong>：在线蒸馏灵活，离线蒸馏简单</li>
+<li><strong>特征vs输出</strong>：特征蒸馏信息丰富，输出蒸馏直接</li>
+<li><strong>单教师vs多教师</strong>：单教师简单，多教师知识丰富</li>
+<li><strong>硬蒸馏vs软蒸馏</strong>：硬蒸馏收敛快，软蒸馏效果好</li>
+</ol>
+<h3 id="_7">🔬 研究方向</h3>
+<ol>
+<li><strong>自监督蒸馏</strong>：无需标签的蒸馏方法</li>
+<li><strong>跨模态蒸馏</strong>：不同模态间的知识迁移</li>
+<li><strong>终身蒸馏</strong>：持续学习场景下的蒸馏</li>
+<li><strong>理论理解</strong>：蒸馏为什么有效的理论分析</li>
+</ol>
+<hr />
+<p><a href="#section2">← 上一节：模型剪枝技术</a> | <a href="#section4">下一节：低秩分解 →</a></p>
+<h2 id="94">9.4 低秩分解与结构化压缩</h2>
+<p>利用神经网络权重矩阵的低秩特性，可以大幅减少参数量和计算量。本节探讨各种矩阵分解技术在模型压缩中的应用。</p>
+<h3 id="941">9.4.1 矩阵分解基础</h3>
+<p><strong>奇异值分解（SVD）</strong>：</p>
+<p>对权重矩阵 $W \in \mathbb{R}^{m \times n}$ ：
+$$W = U\Sigma V^T$$
+低秩近似：
+$$W \approx U_r\Sigma_r V_r^T$$
+其中 $r &lt; \min(m, n)$ 是秩。</p>
+<p>压缩率：
+$$\text{Compression} = \frac{mn}{r(m + n + 1)}$$
+<strong>分解误差分析</strong>：</p>
+<p>Eckart-Young定理：
+$$||W - W_r||_F = \sqrt{\sum_{i=r+1}^{\min(m,n)} \sigma_i^2}$$
+选择 $r$ 使得保留能量比例：
+$$\frac{\sum_{i=1}^r \sigma_i^2}{\sum_{i=1}^{\min(m,n)} \sigma_i^2} \geq \theta$$</p>
+<h3 id="942">9.4.2 张量分解</h3>
+<p><strong>CP分解</strong>：</p>
+<p>将高维张量分解为秩1张量之和：
+$$\mathcal{T} = \sum_{r=1}^R a_r \otimes b_r \otimes c_r$$
+<strong>Tucker分解</strong>：
+$$\mathcal{T} = \mathcal{G} \times_1 A \times_2 B \times_3 C$$
+其中 $\mathcal{G}$ 是核心张量。</p>
+<p><strong>张量链（Tensor-Train）分解</strong>：
+$$\mathcal{T}(i_1, i_2, ..., i_d) = \sum_{r_1,...,r_{d-1}} G_1(i_1, r_1)G_2(r_1, i_2, r_2)...G_d(r_{d-1}, i_d)$$
+指数级压缩高维张量。</p>
+<h3 id="943">9.4.3 结构化矩阵</h3>
+<p><strong>循环矩阵</strong>：
+$$W = \begin{bmatrix}
+w_0 &amp; w_{n-1} &amp; \cdots &amp; w_1 \\
+w_1 &amp; w_0 &amp; \cdots &amp; w_2 \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+w_{n-1} &amp; w_{n-2} &amp; \cdots &amp; w_0
+\end{bmatrix}$$
+只需存储 $n$ 个参数，计算可用FFT加速。</p>
+<p><strong>Toeplitz矩阵</strong>：</p>
+<p>对角线元素相同，存储 $2n-1$ 个参数。</p>
+<p><strong>低位移秩矩阵</strong>：
+$$W = D + UV^T$$
+其中 $D$ 是对角矩阵， $U, V \in \mathbb{R}^{n \times r}$ 。</p>
+<h3 id="944">9.4.4 自适应低秩分解</h3>
+<p><strong>逐层秩选择</strong>：</p>
+<p>基于敏感度分析：
+$$S_l = \frac{\partial L}{\partial r_l} = \sum_{i=r_l+1}^{\min(m,n)} \sigma_i \frac{\partial L}{\partial \sigma_i}$$
+<strong>动态秩调整</strong>：</p>
+<p>训练过程中调整秩：
+$$r_t = \begin{cases}
+r_{t-1} + 1 &amp; \text{if accuracy drop} &gt; \epsilon \\
+r_{t-1} - 1 &amp; \text{if accuracy stable}
+\end{cases}$$
+<strong>软秩选择</strong>：</p>
+<p>引入可学习的重要性分数：
+$$W = U\text{diag}(\alpha)\Sigma V^T$$
+其中 $\alpha$ 是可学习的门控。</p>
+<h3 id="945">9.4.5 分解与微调</h3>
+<p><strong>固定分解微调</strong>：</p>
+<ol>
+<li>对预训练模型进行SVD</li>
+<li>固定 $U, V$ ，只微调 $\Sigma$</li>
+<li>或固定主要成分，微调残差</li>
+</ol>
+<p><strong>联合优化</strong>：</p>
+<p>直接优化分解形式：
+$$\min_{U,V} L(f(X; U, V)) + \lambda||U||_F^2 + \lambda||V||_F^2$$
+<strong>渐进式分解</strong>：</p>
+<div class="codehilite"><pre><span></span><code>for epoch in training:
+    if epoch % k == 0:
+        W = current_weights
+        U, S, V = SVD(W)
+        W_approx = U[:,:r] @ S[:r,:r] @ V[:r,:]
+        reinitialize(W_approx)
+</code></pre></div>
+
+<h3 id="946">9.4.6 应用实例</h3>
+<p><strong>Transformer压缩</strong>：</p>
+<ol>
+<li>
+<p><strong>注意力分解</strong>：
+$$\text{Attention} = \text{Softmax}(QK^T)V$$
+分解 $W_Q, W_K, W_V$ 矩阵。</p>
+</li>
+<li>
+<p><strong>FFN压缩</strong>：
+$$\text{FFN}(x) = W_2\text{ReLU}(W_1x)$$
+用瓶颈结构替代。</p>
+</li>
+</ol>
+<p><strong>卷积分解</strong>：</p>
+<ol>
+<li>
+<p><strong>空间分解</strong>：
+   $k \times k$ 卷积 → $k \times 1$ + $1 \times k$</p>
+</li>
+<li>
+<p><strong>通道分解</strong>：
+   标准卷积 → depthwise + pointwise</p>
+</li>
+<li>
+<p><strong>CP分解卷积核</strong>：
+   4D张量分解为多个1D卷积。</p>
+</li>
+</ol>
+<h3 id="94_1">练习 9.4</h3>
+<p>设计一个基于低秩分解的压缩系统：</p>
+<ol>
+<li>
+<p><strong>分解策略</strong>（25分）：
+   - 选择合适的分解方法
+   - 设计秩选择算法
+   - 优化分解效率</p>
+</li>
+<li>
+<p><strong>训练集成</strong>（25分）：
+   - 实现分解感知训练
+   - 设计正则化方法
+   - 处理数值稳定性</p>
+</li>
+<li>
+<p><strong>架构优化</strong>（25分）：
+   - 设计高效的分解层
+   - 优化前向传播
+   - 减少内存占用</p>
+</li>
+<li>
+<p><strong>应用适配</strong>（25分）：
+   - 针对特定任务优化
+   - 评估压缩效果
+   - 分析计算加速</p>
+</li>
+</ol>
+<details>
+<summary>练习答案</summary>
+<p><strong>低秩压缩系统设计</strong>：</p>
+<ol>
+<li><strong>自适应分解框架</strong>：</li>
+</ol>
+<p>分解方法选择：</p>
+<div class="codehilite"><pre><span></span><code>全连接层：SVD分解
+卷积层：CP/Tucker分解
+注意力：分块低秩近似
+Embedding：基于频率的SVD
+</code></pre></div>
+
+<p>自动秩选择：</p>
+<ul>
+<li>能量保留：保留95%奇异值能量</li>
+<li>梯度敏感：基于Fisher信息</li>
+<li>贝叶斯优化：搜索最优秩配置</li>
+</ul>
+<p>增量SVD：
+   避免重复计算完整SVD</p>
+<ol start="2">
+<li><strong>低秩感知训练</strong>：</li>
+</ol>
+<p>参数化方法：</p>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="n">LowRankLinear:</span>
+    <span class="n">def</span> <span class="n">__init__</span>(<span class="nb">self</span>, <span class="n">in_dim</span>, <span class="n">out_dim</span>, <span class="n">rank</span>):
+        <span class="nb">self</span>.<span class="n">U</span> = <span class="nb">Parameter</span>(<span class="n">torch</span>.<span class="n">randn</span>(<span class="n">in_dim</span>, <span class="n">rank</span>))
+        <span class="nb">self</span>.<span class="n">V</span> = <span class="nb">Parameter</span>(<span class="n">torch</span>.<span class="n">randn</span>(<span class="n">rank</span>, <span class="n">out_dim</span>))
+
+    <span class="n">def</span> <span class="n">forward</span>(<span class="nb">self</span>, <span class="nb">x</span>):
+        <span class="k">return</span> <span class="nb">x</span> @ <span class="nb">self</span>.<span class="n">U</span> @ <span class="nb">self</span>.<span class="n">V</span>
+</code></pre></div>
+
+<p>正则化设计：</p>
+<ul>
+<li>核范数正则：促进低秩</li>
+<li>正交正则：保持U,V正交性</li>
+<li>谱正则化：控制谱范数</li>
+</ul>
+<p>数值稳定：</p>
+<ul>
+<li>定期正交化</li>
+<li>梯度裁剪</li>
+<li>条件数监控</li>
+</ul>
+<ol start="3">
+<li><strong>高效架构实现</strong>：</li>
+</ol>
+<p>分解层设计：</p>
+<div class="codehilite"><pre><span></span><code>原始：x → W → y
+分解：x → U → bottleneck → V → y
+
+内存：O(mn) → O(r(m+n))
+计算：O(mn) → O(r(m+n))
+</code></pre></div>
+
+<p>融合优化：</p>
+<ul>
+<li>矩阵乘法融合</li>
+<li>激活函数合并</li>
+<li>批处理优化</li>
+</ul>
+<p>动态分解：
+   根据输入动态调整秩</p>
+<ol start="4">
+<li><strong>任务特定优化</strong>：</li>
+</ol>
+<p>NLP任务：</p>
+<ul>
+<li>Embedding：高频词高秩</li>
+<li>Attention：局部低秩块</li>
+<li>FFN：极限压缩（10-20x）</li>
+</ul>
+<p>CV任务：</p>
+<ul>
+<li>早期层：保持高秩</li>
+<li>深层：激进压缩</li>
+<li>分组卷积结合</li>
+</ul>
+<p>效果评估：</p>
+<ul>
+<li>压缩率：5-50倍</li>
+<li>精度损失：&lt;2%</li>
+<li>实际加速：2-10倍</li>
+</ul>
+<p>这个系统通过自适应低秩分解，实现了高效的模型压缩，特别适合部署场景。</p>
+</details>
+<h3 id="_8">⚡ 设计选择</h3>
+<ol>
+<li><strong>分解类型</strong>：SVD通用但计算贵，特殊结构快但限制多</li>
+<li><strong>固定vs学习</strong>：固定分解简单，学习分解灵活</li>
+<li><strong>全局vs局部</strong>：全局分解激进，局部分解稳定</li>
+<li><strong>静态vs动态</strong>：静态秩简单，动态秩自适应</li>
+</ol>
+<h3 id="_9">🔬 研究方向</h3>
+<ol>
+<li><strong>神经张量分解</strong>：专为神经网络设计的分解</li>
+<li><strong>量子启发分解</strong>：借鉴量子计算的分解方法</li>
+<li><strong>自适应秩</strong>：输入相关的动态秩选择</li>
+<li><strong>硬件协同</strong>：与专用硬件协同设计</li>
+</ol>
+<hr />
+<p><a href="#section3">← 上一节：知识蒸馏</a> | <a href="#section5">下一节：神经架构搜索 →</a></p>
+<h2 id="95">9.5 神经架构搜索与自动压缩</h2>
+<p>神经架构搜索（NAS）技术可以自动发现高效的压缩模型架构。本节探讨NAS在模型压缩中的应用。</p>
+<h3 id="951">9.5.1 压缩导向的搜索空间</h3>
+<p><strong>通道数搜索</strong>：</p>
+<p>搜索每层的通道数：
+$$\text{Channels} = \{0.25C, 0.5C, 0.75C, C\}$$
+其中 $C$ 是原始通道数。</p>
+<p><strong>深度搜索</strong>：</p>
+<p>弹性深度网络：
+$$f(x) = f_L \circ ... \circ f_l \circ ... \circ f_1(x)$$
+搜索要保留的层子集。</p>
+<p><strong>操作搜索</strong>：</p>
+<p>混合精度操作：</p>
+<ul>
+<li>标准卷积</li>
+<li>深度可分离卷积</li>
+<li>分组卷积</li>
+<li>跳跃连接</li>
+</ul>
+<h3 id="952">9.5.2 多目标优化</h3>
+<p><strong>目标函数</strong>：
+$$\min_{\alpha} \lambda_1 \cdot \text{Error}(\alpha) + \lambda_2 \cdot \text{Latency}(\alpha) + \lambda_3 \cdot \text{Energy}(\alpha)$$
+其中 $\alpha$ 是架构参数。</p>
+<p><strong>Pareto前沿</strong>：</p>
+<p>找到精度-效率的最优权衡：
+$$\text{Pareto}(\mathcal{A}) = \{\alpha \in \mathcal{A} : \nexists \alpha' \in \mathcal{A}, \alpha' \prec \alpha\}$$
+<strong>硬件感知搜索</strong>：</p>
+<p>考虑实际硬件约束：</p>
+<ul>
+<li>内存带宽</li>
+<li>计算并行度</li>
+<li>能耗模型</li>
+</ul>
+<h3 id="953">9.5.3 可微分架构搜索</h3>
+<p><strong>DARTS框架</strong>：</p>
+<p>连续化架构搜索：
+$$\bar{o}^{(i,j)} = \sum_{o \in \mathcal{O}} \frac{\exp(\alpha_o^{(i,j)})}{\sum_{o' \in \mathcal{O}} \exp(\alpha_{o'}^{(i,j)})} o(x)$$
+<strong>资源约束DARTS</strong>：</p>
+<p>加入资源正则项：
+$$L = L_{task} + \lambda \cdot \text{Resource}(\alpha)$$
+其中Resource可以是FLOPs、延迟或内存。</p>
+<p><strong>渐进式收缩</strong>：</p>
+<p>训练过程中逐步减少候选操作：
+$$\mathcal{O}_t = \{o \in \mathcal{O} : \alpha_o &gt; \theta_t\}$$</p>
+<h3 id="954">9.5.4 进化算法搜索</h3>
+<p><strong>种群初始化</strong>：</p>
+<p>基于先验知识的初始化：</p>
+<ul>
+<li>成功架构的变体</li>
+<li>随机采样</li>
+<li>启发式规则</li>
+</ul>
+<p><strong>适应度函数</strong>：
+$$\text{Fitness} = \frac{\text{Accuracy}}{(\text{FLOPs})^\beta}$$
+$\beta$ 控制效率权重。</p>
+<p><strong>进化操作</strong>：</p>
+<ol>
+<li>
+<p><strong>变异</strong>：
+   - 改变通道数
+   - 替换操作类型
+   - 调整连接</p>
+</li>
+<li>
+<p><strong>交叉</strong>：
+   - 块级别交换
+   - 路径合并</p>
+</li>
+</ol>
+<h3 id="955">9.5.5 预测器引导搜索</h3>
+<p><strong>性能预测器</strong>：</p>
+<p>不需要完整训练就预测性能：
+$$\hat{acc} = f_{predictor}(\text{arch_encoding})$$
+<strong>零次学习预测</strong>：</p>
+<p>基于架构特征直接预测：</p>
+<ul>
+<li>计算图统计</li>
+<li>操作分布</li>
+<li>连接模式</li>
+</ul>
+<p><strong>早停策略</strong>：</p>
+<p>基于学习曲线预测最终性能：
+$$acc_{final} = acc_t \cdot (1 - a \cdot e^{-bt})$$</p>
+<h3 id="956">9.5.6 一次训练多部署</h3>
+<p><strong>超网络训练</strong>：</p>
+<p>训练包含所有子网的超网：
+$$\mathcal{L}_{super} = \mathbb{E}_{\alpha \sim p(\alpha)}[\mathcal{L}(w, \alpha)]$$
+<strong>渐进收缩</strong>：</p>
+<ol>
+<li>训练最大网络</li>
+<li>逐步收缩获得子网</li>
+<li>继承权重微调</li>
+</ol>
+<p><strong>弹性训练</strong>：</p>
+<p>同时优化多个宽度：
+$$\mathcal{L} = \sum_{width \in \mathcal{W}} \mathcal{L}(f_{width}(x), y)$$</p>
+<h3 id="95_1">练习 9.5</h3>
+<p>设计一个自动模型压缩系统：</p>
+<ol>
+<li>
+<p><strong>搜索空间</strong>（25分）：
+   - 设计高效的搜索空间
+   - 支持多种压缩维度
+   - 考虑硬件约束</p>
+</li>
+<li>
+<p><strong>搜索策略</strong>（25分）：
+   - 选择合适的搜索算法
+   - 设计评估方法
+   - 优化搜索效率</p>
+</li>
+<li>
+<p><strong>训练优化</strong>（25分）：
+   - 实现权重共享
+   - 设计快速适配
+   - 处理训练稳定性</p>
+</li>
+<li>
+<p><strong>部署集成</strong>（25分）：
+   - 硬件性能建模
+   - 自动代码生成
+   - 端到端优化</p>
+</li>
+</ol>
+<details>
+<summary>练习答案</summary>
+<p><strong>自动压缩系统设计</strong>：</p>
+<ol>
+<li><strong>分层搜索空间</strong>：</li>
+</ol>
+<p>维度定义：</p>
+<div class="codehilite"><pre><span></span><code>深度：{跳过0-3层}
+宽度：{0.25x, 0.5x, 0.75x, 1x}
+算子：{标准, DW, 组卷积, 线性}
+精度：{INT4, INT8, FP16, FP32}
+</code></pre></div>
+
+<p>约束编码：</p>
+<ul>
+<li>内存：Σ(params × bits) &lt; Memory_limit</li>
+<li>延迟：measured_latency &lt; Target</li>
+<li>能耗：estimated_energy &lt; Budget</li>
+</ul>
+<p>分组搜索：</p>
+<ul>
+<li>backbone独立搜索</li>
+<li>head部分固定</li>
+<li>关键层保护</li>
+</ul>
+<ol start="2">
+<li><strong>混合搜索策略</strong>：</li>
+</ol>
+<p>两阶段方法：</p>
+<div class="codehilite"><pre><span></span><code>阶段1：可微搜索（粗搜索）
+
+- GDAS减少内存
+- 资源感知loss
+- 快速收敛（50 epochs）
+
+阶段2：进化优化（精搜索）
+
+- 基于阶段1结果初始化
+- 真实硬件评估
+- Pareto前沿维护
+</code></pre></div>
+
+<p>预测器加速：</p>
+<ul>
+<li>GCN编码架构</li>
+<li>迁移学习</li>
+<li>不确定性估计</li>
+</ul>
+<ol start="3">
+<li><strong>高效训练框架</strong>：</li>
+</ol>
+<p>超网络策略：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">训练大超网</span><span class="err">（</span><span class="n">包含所有选择</span><span class="err">）</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">知识蒸馏到子网</span>
+<span class="mf">3.</span><span class="w"> </span><span class="n">路径采样训练</span>
+<span class="mf">4.</span><span class="w"> </span><span class="n">权重继承机制</span>
+</code></pre></div>
+
+<p>稳定性技巧：</p>
+<ul>
+<li>渐进式通道pruning</li>
+<li>BN统计量校准  </li>
+<li>学习率warm-up</li>
+<li>Sandwich采样</li>
+</ul>
+<ol start="4">
+<li><strong>自动化部署</strong>：</li>
+</ol>
+<p>性能建模：</p>
+<div class="codehilite"><pre><span></span><code>延迟 = Σ(layer_latency × 选择)
+
+<span class="k">-</span> 离线profile建表
+<span class="k">-</span> 在线插值预测
+<span class="k">-</span> 考虑内存访问
+</code></pre></div>
+
+<p>代码生成：</p>
+<ul>
+<li>计算图优化</li>
+<li>算子融合</li>
+<li>内存规划</li>
+<li>并行策略</li>
+</ul>
+<p>持续优化：</p>
+<ul>
+<li>A/B测试框架</li>
+<li>在线指标收集</li>
+<li>自动再搜索</li>
+</ul>
+<p>这个系统实现了从搜索到部署的全自动化，能够针对不同硬件和任务需求生成最优压缩模型。</p>
+</details>
+<h3 id="_10">⚡ 设计选择</h3>
+<ol>
+<li><strong>手动vs自动</strong>：手动设计直观，自动搜索可能找到更优解</li>
+<li><strong>单目标vs多目标</strong>：单目标简单，多目标更实用</li>
+<li><strong>黑盒vs可微</strong>：黑盒通用，可微高效</li>
+<li><strong>离线vs在线</strong>：离线搜索充分，在线搜索自适应</li>
+</ol>
+<h3 id="_11">🔬 研究方向</h3>
+<ol>
+<li><strong>零样本NAS</strong>：无需训练的架构评估</li>
+<li><strong>持续NAS</strong>：适应变化的需求和数据</li>
+<li><strong>联邦NAS</strong>：分布式环境下的架构搜索</li>
+<li><strong>可解释NAS</strong>：理解为什么某些架构更好</li>
+</ol>
+<hr />
+<p><a href="#section4">← 上一节：低秩分解</a> | <a href="#section6">下一节：实战案例 →</a></p>
+<h2 id="96">9.6 压缩技术实战与案例分析</h2>
+<p>将各种压缩技术综合应用到实际场景中，需要carefully权衡各种因素。本节通过具体案例展示端到端的模型压缩流程。</p>
+<h3 id="961">9.6.1 压缩流程设计</h3>
+<p><strong>典型压缩pipeline</strong>：</p>
+<ol>
+<li>
+<p><strong>模型分析</strong>：
+   - 计算/内存瓶颈定位
+   - 层敏感度分析
+   - 冗余度评估</p>
+</li>
+<li>
+<p><strong>压缩策略选择</strong>：
+   - 根据部署场景选择
+   - 组合多种技术
+   - 确定压缩目标</p>
+</li>
+<li>
+<p><strong>渐进式压缩</strong>：
+   - 先剪枝后量化
+   - 蒸馏辅助恢复
+   - 迭代优化</p>
+</li>
+<li>
+<p><strong>部署优化</strong>：
+   - 硬件特定优化
+   - 运行时优化
+   - 持续监控</p>
+</li>
+</ol>
+<h3 id="962">9.6.2 大语言模型压缩案例</h3>
+<p><strong>目标</strong>：将175B参数模型压缩到7B，保持90%性能。</p>
+<p><strong>压缩方案</strong>：</p>
+<ol>
+<li>
+<p><strong>架构精简</strong>（175B→30B）：
+   - 减少层数：96→48层
+   - 降低隐藏维度：12288→4096
+   - 减少注意力头：96→32</p>
+</li>
+<li>
+<p><strong>知识蒸馏</strong>（30B→13B）：</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>L = αL_CE + βL_KD + γL_feature
+
+<span class="k">-</span> 逐层蒸馏
+<span class="k">-</span> 注意力图匹配
+<span class="k">-</span> 中间表示对齐
+</code></pre></div>
+
+<ol start="3">
+<li>
+<p><strong>结构化剪枝</strong>（13B→10B）：
+   - 重要性评分：梯度×权重
+   - 块稀疏：4×4块
+   - 保持关键层密集</p>
+</li>
+<li>
+<p><strong>量化</strong>（10B→7B等效）：
+   - 权重：INT4
+   - 激活：INT8
+   - KV cache：INT4</p>
+</li>
+</ol>
+<p><strong>训练策略</strong>：</p>
+<div class="codehilite"><pre><span></span><code>Phase 1: 架构搜索（2周）
+
+- 超网训练
+- 硬件评估
+- Pareto选择
+
+Phase 2: 知识迁移（4周）
+
+- 大batch训练
+- 多教师ensemble
+- 课程学习
+
+Phase 3: 压缩微调（2周）
+
+- 剪枝+量化
+- 蒸馏recovery
+- 任务适配
+</code></pre></div>
+
+<h3 id="963">9.6.3 边缘视觉模型压缩</h3>
+<p><strong>目标</strong>：ResNet50压缩到&lt;5MB，延迟&lt;10ms@ARM。</p>
+<p><strong>技术组合</strong>：</p>
+<ol>
+<li>
+<p><strong>深度可分离替换</strong>：
+   - 标准卷积→DW+PW
+   - FLOPs降低8-9倍
+   - 精度损失&lt;1%</p>
+</li>
+<li>
+<p><strong>通道剪枝</strong>：</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>敏感度分析：
+
+- Layer1-2: 保留80%通道
+- Layer3: 保留60%通道  
+- Layer4: 保留40%通道
+</code></pre></div>
+
+<ol start="3">
+<li>
+<p><strong>混合精度量化</strong>：
+   - 首尾层：INT8（敏感）
+   - 中间层：INT4
+   - 跳跃连接：FP16</p>
+</li>
+<li>
+<p><strong>知识蒸馏</strong>：
+   - 教师：ResNet152
+   - 特征匹配点：stage输出
+   - 数据增强：mixup+cutmix</p>
+</li>
+</ol>
+<p><strong>部署优化</strong>：</p>
+<ul>
+<li>NEON指令优化</li>
+<li>内存池化</li>
+<li>流水线并行</li>
+</ul>
+<h3 id="964-nlp">9.6.4 实时NLP模型压缩</h3>
+<p><strong>目标</strong>：BERT-base压缩5倍，保持GLUE平均分&gt;80。</p>
+<p><strong>分层压缩策略</strong>：</p>
+<ol>
+<li>
+<p><strong>层数减少</strong>：
+   - 学生模型：6层
+   - 层映射：[0,2,4,6,8,10]
+   - PKD蒸馏</p>
+</li>
+<li>
+<p><strong>注意力压缩</strong>：</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>原始：12头×64维
+压缩：4头×64维
+补偿：增加FFN容量
+</code></pre></div>
+
+<ol start="3">
+<li>
+<p><strong>词表优化</strong>：
+   - 频率筛选：保留20K高频词
+   - 子词合并
+   - OOV处理</p>
+</li>
+<li>
+<p><strong>动态计算</strong>：
+   - 早退出机制
+   - 条件计算
+   - 注意力跳过</p>
+</li>
+</ol>
+<h3 id="965">9.6.5 联合压缩优化</h3>
+<p><strong>多维度协同</strong>：</p>
+<ol>
+<li><strong>剪枝+量化</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>策略1：先剪枝后量化
+
+- 剪枝改变权重分布
+- 量化需要重新校准
+
+策略2：联合优化
+
+- 同时考虑稀疏和量化
+- 统一的重要性度量
+</code></pre></div>
+
+<ol start="2">
+<li>
+<p><strong>蒸馏+NAS</strong>：
+   - NAS搜索学生架构
+   - 蒸馏提供训练信号
+   - 迭代优化</p>
+</li>
+<li>
+<p><strong>低秩+量化</strong>：
+   - 先分解降维
+   - 再量化压缩
+   - 保持数值稳定</p>
+</li>
+</ol>
+<h3 id="966">9.6.6 压缩效果评估</h3>
+<p><strong>多维度指标</strong>：</p>
+<ol>
+<li>
+<p><strong>模型指标</strong>：
+   - 压缩率：参数/存储
+   - 加速比：FLOPs/延迟
+   - 精度保持：绝对/相对</p>
+</li>
+<li>
+<p><strong>系统指标</strong>：
+   - 吞吐量：QPS
+   - 延迟：P50/P95/P99
+   - 资源使用：CPU/内存/功耗</p>
+</li>
+<li>
+<p><strong>业务指标</strong>：
+   - 用户体验：响应时间
+   - 成本节省：服务器/带宽
+   - 覆盖提升：设备兼容性</p>
+</li>
+</ol>
+<p><strong>A/B测试框架</strong>：</p>
+<div class="codehilite"><pre><span></span><code>实验设计：
+
+- 对照组：原始模型
+- 实验组：压缩模型
+- 分流策略：1%→5%→20%→50%
+
+监控指标：
+
+- 在线精度
+- 用户行为
+- 系统稳定性
+</code></pre></div>
+
+<h3 id="96_1">练习 9.6</h3>
+<p>设计一个端到端的模型压缩项目：</p>
+<ol>
+<li>
+<p><strong>需求分析</strong>（25分）：
+   - 明确压缩目标
+   - 分析约束条件
+   - 制定评估标准</p>
+</li>
+<li>
+<p><strong>方案设计</strong>（25分）：
+   - 选择压缩技术
+   - 设计实验流程
+   - 规划时间进度</p>
+</li>
+<li>
+<p><strong>实施优化</strong>（25分）：
+   - 实现压缩pipeline
+   - 调优超参数
+   - 处理特殊情况</p>
+</li>
+<li>
+<p><strong>效果验证</strong>（25分）：
+   - 全面测试评估
+   - 分析瓶颈问题
+   - 持续优化方案</p>
+</li>
+</ol>
+<details>
+<summary>练习答案</summary>
+<p><strong>端到端压缩项目方案</strong>：</p>
+<ol>
+<li><strong>需求分析框架</strong>：</li>
+</ol>
+<p>目标分解：</p>
+<div class="codehilite"><pre><span></span><code>业务目标：移动端部署SOTA模型
+技术指标：
+
+- 模型&lt;50MB
+- 延迟&lt;100ms@骁龙865
+- 精度损失&lt;5%
+
+约束条件：
+
+- 开发时间：1个月
+- 计算资源：8×V100
+- 兼容性：Android 6.0+
+</code></pre></div>
+
+<p>风险评估：</p>
+<ul>
+<li>精度下降过多</li>
+<li>特定case失效</li>
+<li>部署兼容性</li>
+</ul>
+<ol start="2">
+<li><strong>技术方案设计</strong>：</li>
+</ol>
+<p>三阶段计划：</p>
+<div class="codehilite"><pre><span></span><code>Week 1-2: 探索阶段
+
+- 基线建立
+- 敏感度分析
+- 技术预研
+
+Week 3-4: 实施阶段
+
+- 剪枝：结构化50%
+- 量化：INT8为主
+- 蒸馏：恢复精度
+
+Week 5-6: 优化阶段
+
+- 联合调优
+- 部署适配
+- 性能优化
+</code></pre></div>
+
+<p>技术选型：</p>
+<ul>
+<li>优先结构化方法（硬件友好）</li>
+<li>渐进式压缩（稳定）</li>
+<li>自动化工具（高效）</li>
+</ul>
+<ol start="3">
+<li><strong>实施关键点</strong>：</li>
+</ol>
+<p>压缩pipeline：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 伪代码</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">load_pretrained</span><span class="p">()</span>
+
+<span class="c1"># 阶段1：结构化剪枝</span>
+<span class="n">importance</span> <span class="o">=</span> <span class="n">analyze_importance</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">pruned</span> <span class="o">=</span> <span class="n">prune_channels</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">importance</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># 阶段2：量化感知训练  </span>
+<span class="n">quantized</span> <span class="o">=</span> <span class="n">prepare_qat</span><span class="p">(</span><span class="n">pruned</span><span class="p">)</span>
+<span class="n">train_qat</span><span class="p">(</span><span class="n">quantized</span><span class="p">,</span> <span class="n">teacher</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+
+<span class="c1"># 阶段3：部署优化</span>
+<span class="n">optimized</span> <span class="o">=</span> <span class="n">optimize_graph</span><span class="p">(</span><span class="n">quantized</span><span class="p">)</span>
+<span class="n">exported</span> <span class="o">=</span> <span class="n">export_mobile</span><span class="p">(</span><span class="n">optimized</span><span class="p">)</span>
+</code></pre></div>
+
+<p>调优策略：</p>
+<ul>
+<li>learning rate: 1e-4→1e-5</li>
+<li>蒸馏温度: 3→5→3</li>
+<li>剪枝调度: 余弦退火</li>
+</ul>
+<ol start="4">
+<li><strong>评估与迭代</strong>：</li>
+</ol>
+<p>评估体系：</p>
+<div class="codehilite"><pre><span></span><code>离线评估：
+
+- 标准测试集
+- 对抗样本
+- 边界case
+
+在线评估：
+
+- 小流量实验
+- 核心指标监控
+- 用户反馈收集
+</code></pre></div>
+
+<p>优化迭代：</p>
+<ul>
+<li>Bad case分析→针对性优化</li>
+<li>性能瓶颈→算子优化</li>
+<li>精度不足→调整压缩率</li>
+</ul>
+<p>交付标准：</p>
+<ul>
+<li>文档完整</li>
+<li>代码规范</li>
+<li>可复现性</li>
+</ul>
+<p>这个方案通过系统化的方法，确保压缩项目的成功实施和交付。</p>
+</details>
+<h3 id="_12">⚡ 设计选择</h3>
+<ol>
+<li><strong>激进vs保守</strong>：激进压缩风险大收益高</li>
+<li><strong>自动vs手动</strong>：自动化省力，手动可控</li>
+<li><strong>单一vs组合</strong>：单一技术简单，组合效果好</li>
+<li><strong>离线vs在线</strong>：离线优化充分，在线自适应</li>
+</ol>
+<h3 id="_13">🔬 研究方向</h3>
+<ol>
+<li><strong>端到端压缩</strong>：一次训练得到多个压缩版本</li>
+<li><strong>自适应压缩</strong>：根据输入动态调整压缩</li>
+<li><strong>联合优化</strong>：压缩与架构、任务联合设计</li>
+<li><strong>新硬件适配</strong>：为新型AI芯片定制压缩</li>
+</ol>
+<h2 id="_14">本章小结</h2>
+<p>本章深入探讨了有损压缩技术在深度学习中的应用，涵盖了量化、剪枝、知识蒸馏、低秩分解等主要方法。关键要点：</p>
+<ol>
+<li><strong>量化技术</strong>：通过降低数值精度实现4-8倍压缩，INT8已经成熟，INT4/二值网络是前沿</li>
+<li><strong>模型剪枝</strong>：移除冗余连接实现10-100倍稀疏，结构化剪枝硬件友好</li>
+<li><strong>知识蒸馏</strong>：大模型指导小模型，是保持性能的关键技术</li>
+<li><strong>低秩分解</strong>：利用矩阵低秩特性，特别适合大规模全连接层</li>
+<li><strong>神经架构搜索</strong>：自动发现高效架构，是未来趋势</li>
+<li><strong>组合优化</strong>：多种技术配合使用，实现极限压缩</li>
+</ol>
+<p>这些压缩技术使得大模型的边缘部署成为可能，是AI普及的关键技术。下一章我们将探讨推理优化和系统设计，进一步提升部署效率。</p>
+<hr />
+<p><a href="#section5">← 上一节：神经架构搜索</a> | <a href="chapter10.html">下一章：推理优化与系统设计 →</a></p>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter8.html" class="nav-link prev">← 第8章：训练基础设施I：无损加速技术</a><a href="chapter10.html" class="nav-link next">第10章：推理优化与系统设计 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

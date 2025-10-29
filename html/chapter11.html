@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第11章：可解释AI与模型内部机制</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">大型语言模型(LLM)设计与实现教程</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第1章: Transformer架构深度剖析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第2章: GPT预训练原理与设计选择</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第3章：微调技术与对齐方法</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第4章：强化学习与RLHF深度解析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第5章：长思维链与推理能力培养</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第6章：最新架构创新</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第7章：数据工程：预训练、后训练与合成数据</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第8章：训练基础设施I：无损加速技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第9章：训练基础设施II：有损压缩与量化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter10.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第10章：推理优化与系统设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第11章：可解释AI与模型内部机制</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第12章：评测基准与实际应用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">LLM tutorial 项目说明</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="README.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">语言模型全面教程</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="11ai">第11章：可解释AI与模型内部机制</h1>
+<p>理解大型语言模型的内部工作机制对于提升模型性能、确保安全性和建立信任至关重要。本章深入探讨各种解释性技术，帮助我们揭开"黑盒"模型的神秘面纱。</p>
+<h2 id="_1">本章目标</h2>
+<ul>
+<li>理解注意力机制的可视化和分析方法</li>
+<li>掌握神经元级别的解释技术</li>
+<li>学习探测任务和表示分析</li>
+<li>了解因果追踪和电路发现</li>
+<li>探索机械解释性的前沿方法</li>
+<li>实践可解释性工具的应用</li>
+</ul>
+<h2 id="111">11.1 注意力分析与可视化</h2>
+<p>注意力机制是Transformer的核心，分析注意力模式可以揭示模型的信息流动。</p>
+<h3 id="1111">11.1.1 注意力模式分析</h3>
+<p><strong>注意力矩阵结构</strong>：</p>
+<p>对于输入序列长度 $n$ ，注意力矩阵 $A \in \mathbb{R}^{n \times n}$ ：</p>
+<p>$$A_{ij} = \frac{\exp(q_i \cdot k_j / \sqrt{d})}{\sum_{k=1}^{n} \exp(q_i \cdot k_k / \sqrt{d})}$$
+其中 $A_{ij}$ 表示位置 $i$ 对位置 $j$ 的注意力权重。</p>
+<p><strong>常见注意力模式</strong>：</p>
+<ol>
+<li>
+<p><strong>局部模式</strong>：
+   相邻token的强连接</p>
+</li>
+<li>
+<p><strong>全局模式</strong>：
+   特殊token（如[CLS]）的广泛注意</p>
+</li>
+<li>
+<p><strong>稀疏模式</strong>：
+   长距离依赖的选择性注意</p>
+</li>
+</ol>
+<h3 id="1112">11.1.2 多头注意力分解</h3>
+<p><strong>头部专门化</strong>：</p>
+<p>不同注意力头学习不同的语言现象：</p>
+<div class="codehilite"><pre><span></span><code>头部功能示例：
+
+- Head 1: 语法依赖（主谓关系）
+- Head 2: 指代消解（代词-名词）
+- Head 3: 位置编码（顺序关系）
+- Head 4: 语义相似（同义词）
+</code></pre></div>
+
+<p><strong>头部重要性评估</strong>：
+$$\text{Importance}_h = \mathbb{E}_{x \sim D}\left[\left|\frac{\partial \mathcal{L}}{\partial A_h}\right|_F\right]$$
+其中 $A_h$ 是第 $h$ 个头的注意力矩阵。</p>
+<h3 id="1113">11.1.3 注意力流分析</h3>
+<p><strong>信息流追踪</strong>：</p>
+<p>通过注意力权重追踪信息传播路径：
+$$\text{Flow}_{i \rightarrow j} = \prod_{l=1}^{L} A^{(l)}_{path}$$
+其中 $A^{(l)}_{path}$ 是第 $l$ 层的路径注意力。</p>
+<p><strong>残差流分析</strong>：</p>
+<p>考虑残差连接的完整信息流：
+$$x^{(l+1)} = x^{(l)} + \text{Attn}^{(l)}(x^{(l)}) + \text{FFN}^{(l)}(x^{(l)})$$</p>
+<h3 id="1114">11.1.4 注意力干预实验</h3>
+<p><strong>注意力消融</strong>：</p>
+<p>通过修改注意力权重测试其作用：</p>
+<ol>
+<li>
+<p><strong>零化测试</strong>：
+   将特定注意力设为0</p>
+</li>
+<li>
+<p><strong>固定模式</strong>：
+   使用预定义的注意力模式</p>
+</li>
+<li>
+<p><strong>注意力注入</strong>：
+   强制模型关注特定位置</p>
+</li>
+</ol>
+<p><strong>因果分析</strong>：
+$$\text{Effect} = f(x, A) - f(x, A')$$
+其中 $A'$ 是修改后的注意力。</p>
+<h3 id="1115">11.1.5 可视化技术</h3>
+<p><strong>热力图可视化</strong>：</p>
+<p>将注意力矩阵可视化为热力图，颜色深度表示注意力强度。</p>
+<p><strong>图结构可视化</strong>：</p>
+<p>将注意力视为有向图：</p>
+<ul>
+<li>节点：token</li>
+<li>边：注意力权重</li>
+<li>边宽：权重大小</li>
+</ul>
+<p><strong>交互式探索</strong>：</p>
+<p>支持：</p>
+<ul>
+<li>层级选择</li>
+<li>头部过滤</li>
+<li>阈值调整</li>
+<li>路径追踪</li>
+</ul>
+<h3 id="1116">11.1.6 注意力模式的涌现</h3>
+<p><strong>训练过程中的演化</strong>：</p>
+<ol>
+<li>
+<p><strong>早期阶段</strong>：
+   均匀分布的注意力</p>
+</li>
+<li>
+<p><strong>中期阶段</strong>：
+   局部模式出现</p>
+</li>
+<li>
+<p><strong>后期阶段</strong>：
+   复杂模式稳定</p>
+</li>
+</ol>
+<p><strong>规模效应</strong>：</p>
+<p>模型规模增大时出现的新模式：</p>
+<ul>
+<li>长距离依赖</li>
+<li>层次化注意力</li>
+<li>任务特定模式</li>
+</ul>
+<h3 id="111_1">练习 11.1</h3>
+<p>设计一个注意力分析系统：</p>
+<ol>
+<li>
+<p><strong>数据提取</strong>（25分）：
+   - 提取多层注意力
+   - 处理多头结构
+   - 支持批处理</p>
+</li>
+<li>
+<p><strong>模式识别</strong>（25分）：
+   - 识别常见模式
+   - 量化头部功能
+   - 发现异常模式</p>
+</li>
+<li>
+<p><strong>可视化工具</strong>（25分）：
+   - 实现多种视图
+   - 支持交互探索
+   - 导出分析结果</p>
+</li>
+<li>
+<p><strong>干预实验</strong>（25分）：
+   - 设计消融实验
+   - 实现注意力编辑
+   - 评估因果影响</p>
+</li>
+</ol>
+<details>
+<summary>练习答案</summary>
+<p><strong>注意力分析系统设计</strong>：</p>
+<ol>
+<li><strong>高效数据提取</strong>：</li>
+</ol>
+<p>多层提取架构：</p>
+<div class="codehilite"><pre><span></span><code>Hook机制：
+
+<span class="k">-</span> 注册forward hook
+<span class="k">-</span> 缓存注意力矩阵
+<span class="k">-</span> 内存映射存储
+
+数据结构：
+{
+  &quot;layer_0&quot;: {
+    &quot;head_0&quot;: tensor(batch, seq, seq),
+    &quot;head_1&quot;: tensor(batch, seq, seq),
+    ...
+  },
+  ...
+}
+</code></pre></div>
+
+<p>批处理优化：</p>
+<ul>
+<li>流式处理大批量</li>
+<li>增量更新统计</li>
+<li>并行化分析</li>
+</ul>
+<ol start="2">
+<li><strong>智能模式识别</strong>：</li>
+</ol>
+<p>模式分类器：</p>
+<div class="codehilite"><pre><span></span><code>局部模式检测：
+
+- 对角线权重 &gt; 0.5
+- 带宽 &lt; 5
+
+全局模式检测：
+
+- 熵值 &gt; 阈值
+- 分布均匀性
+
+稀疏模式检测：
+
+- 非零元素 &lt; 10%
+- 聚类分析
+</code></pre></div>
+
+<p>功能量化：</p>
+<div class="codehilite"><pre><span></span><code>语法头：依存距离相关性
+语义头：词向量相似度相关
+位置头：绝对位置相关性
+</code></pre></div>
+
+<ol start="3">
+<li><strong>交互式可视化</strong>：</li>
+</ol>
+<p>多视图系统：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">矩阵视图</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">热力图</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">颜色映射</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">缩放功能</span>
+
+<span class="mf">2.</span><span class="w"> </span><span class="n">图视图</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">力导向布局</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">边权重编码</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">节点聚类</span>
+
+<span class="mf">3.</span><span class="w"> </span><span class="n">流视图</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">桑基图</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">信息流动</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">关键路径</span>
+</code></pre></div>
+
+<p>交互功能：</p>
+<ul>
+<li>实时过滤</li>
+<li>动态阈值</li>
+<li>比较模式</li>
+<li>标注功能</li>
+</ul>
+<ol start="4">
+<li><strong>因果干预框架</strong>：</li>
+</ol>
+<p>实验设计：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">消融实验</span><span class="err">：</span>
+<span class="k">for</span><span class="w"> </span><span class="n">head</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nl">heads</span><span class="p">:</span>
+<span class="w">    </span><span class="n">baseline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">model</span><span class="p">(</span><span class="k">input</span><span class="p">)</span>
+<span class="w">    </span><span class="n">ablated</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">model</span><span class="p">(</span><span class="k">input</span><span class="p">,</span><span class="w"> </span><span class="n">mask_head</span><span class="o">=</span><span class="n">head</span><span class="p">)</span>
+<span class="w">    </span><span class="n">effect</span><span class="o">[</span><span class="n">head</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">metric</span><span class="p">(</span><span class="n">baseline</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">metric</span><span class="p">(</span><span class="n">ablated</span><span class="p">)</span>
+
+<span class="n">注入实验</span><span class="err">：</span>
+<span class="n">pattern</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">create_pattern</span><span class="p">(</span><span class="n">type</span><span class="o">=</span><span class="ss">&quot;syntax&quot;</span><span class="p">)</span>
+<span class="k">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">model</span><span class="p">(</span><span class="k">input</span><span class="p">,</span><span class="w"> </span><span class="n">inject_attention</span><span class="o">=</span><span class="n">pattern</span><span class="p">)</span>
+<span class="n">analyze_behavior_change</span><span class="p">(</span><span class="k">output</span><span class="p">)</span>
+</code></pre></div>
+
+<p>效果评估：
+   ```</p>
+<ul>
+<li>任务性能变化</li>
+<li>表示相似度</li>
+<li>输出分布偏移</li>
+<li>稳定性分析</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>这个系统提供了全面的注意力分析能力，帮助研究者深入理解模型行为。
+
+<span class="o">&lt;/</span><span class="nv">details</span><span class="o">&gt;</span>
+
+<span class="o">###</span><span class="w"> </span>⚡<span class="w"> </span>设计选择
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>静态<span class="nv">vs动态</span><span class="o">**</span>：静态分析快速，动态分析全面
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>单层<span class="nv">vs跨层</span><span class="o">**</span>：单层简单直观，跨层揭示深层模式
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>定量<span class="nv">vs定性</span><span class="o">**</span>：定量精确，定性直观
+<span class="mi">4</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>全局<span class="nv">vs局部</span><span class="o">**</span>：全局把握整体，局部关注细节
+
+<span class="o">###</span><span class="w"> </span>🔬<span class="w"> </span>研究方向
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>注意力压缩<span class="o">**</span>：找到最小充分注意力集
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>注意力引导<span class="o">**</span>：通过注意力控制模型行为
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>跨模态注意力<span class="o">**</span>：统一不同模态的注意力机制
+<span class="mi">4</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>因果注意力<span class="o">**</span>：建立注意力的因果模型
+
+<span class="o">---</span>
+
+<span class="p">[</span>←<span class="w"> </span>上一章：推理优化与系统设计<span class="p">](</span><span class="nv">chapter10</span><span class="o">.</span><span class="nv">md</span><span class="p">)</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="p">[</span>下一节：神经元解释<span class="w"> </span>→<span class="p">](</span><span class="o">#</span><span class="nv">section2</span><span class="p">)</span>
+
+<span class="o">##</span><span class="w"> </span><span class="mf">11.2</span><span class="w"> </span>神经元级别的解释
+
+深入到单个神经元层面，理解它们的功能和表示。
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.2</span><span class="o">.</span><span class="mi">1</span><span class="w"> </span>神经元激活分析
+
+<span class="o">**</span>激活模式识别<span class="o">**</span>：
+
+对于神经元<span class="w"> </span><span class="p">$</span><span class="nv">n</span><span class="p">$</span><span class="w"> </span>，其激活值：
+<span class="p">$$</span><span class="nv">a</span>\<span class="nv">_n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nf">sigma</span><span class="p">(</span><span class="nv">W</span>\<span class="nv">_n</span><span class="w"> </span>\<span class="nv">cdot</span><span class="w"> </span><span class="nv">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nv">b</span>\<span class="nv">_n</span><span class="p">)$$</span>
+分析激活的统计特性：
+
+<span class="o">-</span><span class="w"> </span>激活频率
+<span class="o">-</span><span class="w"> </span>激活强度分布
+<span class="o">-</span><span class="w"> </span>激活相关性
+
+<span class="o">**</span>特征神经元发现<span class="o">**</span>：
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>概念神经元<span class="o">**</span>：
+对特定概念高度响应
+
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>语法神经元<span class="o">**</span>：
+识别语法结构
+
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>位置神经元<span class="o">**</span>：
+编码位置信息
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.2</span><span class="o">.</span><span class="mi">2</span><span class="w"> </span>神经元可解释性
+
+<span class="o">**</span>最大激活样本<span class="o">**</span>：
+
+找到使神经元<span class="w"> </span><span class="p">$</span><span class="nv">n</span><span class="p">$</span><span class="w"> </span>激活最强的输入：
+<span class="p">$$</span><span class="nv">X</span><span class="o">^</span>\<span class="o">*</span>\<span class="nv">_n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="k">to</span><span class="nv">p</span><span class="o">-</span><span class="nv">k</span><span class="p">}</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">x</span><span class="w"> </span>\<span class="nv">in</span><span class="w"> </span><span class="nv">D</span><span class="p">}</span>\\<span class="p">{</span><span class="nv">a</span>\<span class="nf">_n</span><span class="p">(</span><span class="nv">x</span><span class="p">)</span>\\<span class="p">}$$</span>
+分析这些样本的共同特征。
+
+<span class="o">**</span>激活向量分析<span class="o">**</span>：
+
+使用主成分分析（<span class="nv">PCA</span>）或独立成分分析（<span class="nv">ICA</span>）：
+<span class="p">$$</span><span class="nv">A</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">USV</span><span class="o">^</span><span class="nv">T</span><span class="p">$$</span>
+其中<span class="w"> </span><span class="p">$</span><span class="nv">U</span><span class="p">$</span><span class="w"> </span>的列向量代表主要激活模式。
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.2</span><span class="o">.</span><span class="mi">3</span><span class="w"> </span>神经元消融研究
+
+<span class="o">**</span>单神经元消融<span class="o">**</span>：
+<span class="p">$$</span>\<span class="nv">Delta</span><span class="w"> </span>\<span class="nv">mathcal</span><span class="p">{</span><span class="nv">L</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nv">mathcal</span><span class="p">{</span><span class="nv">L</span><span class="p">}(</span><span class="nf">f</span><span class="p">(</span><span class="nv">x</span><span class="p">))</span><span class="w"> </span><span class="o">-</span><span class="w"> </span>\<span class="nv">mathcal</span><span class="p">{</span><span class="nv">L</span><span class="p">}(</span><span class="nf">f</span><span class="p">(</span><span class="nv">x</span><span class="p">)</span><span class="o">|</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">n</span><span class="o">=</span><span class="mi">0</span><span class="p">})$$</span>
+衡量神经元<span class="w"> </span><span class="p">$</span><span class="nv">n</span><span class="p">$</span><span class="w"> </span>的重要性。
+
+<span class="o">**</span>神经元组消融<span class="o">**</span>：
+
+发现功能相关的神经元组：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">Group</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\\<span class="p">{</span><span class="nv">n</span>\<span class="nv">_i</span><span class="w"> </span><span class="o">:</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">corr</span><span class="p">}(</span><span class="nv">a</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">n</span>\<span class="nv">_i</span><span class="p">},</span><span class="w"> </span><span class="nv">a</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">n</span>\<span class="nv">_j</span><span class="p">})</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span>\<span class="nv">theta</span>\\<span class="p">}$$</span>
+<span class="o">###</span><span class="w"> </span><span class="mf">11.2</span><span class="o">.</span><span class="mi">4</span><span class="w"> </span>稀疏自编码器解释
+
+<span class="o">**</span>学习可解释特征<span class="o">**</span>：
+
+训练稀疏自编码器分解激活：
+<span class="p">$$</span><span class="nv">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">f</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">encoder</span><span class="p">}(</span><span class="nv">a</span><span class="p">)$$</span>
+<span class="p">$$</span>\<span class="nv">hat</span><span class="p">{</span><span class="nv">a</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">f</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">decoder</span><span class="p">}(</span><span class="nv">h</span><span class="p">)$$</span>
+<span class="p">$$</span>\<span class="nv">mathcal</span><span class="p">{</span><span class="nv">L</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">||</span><span class="nv">a</span><span class="w"> </span><span class="o">-</span><span class="w"> </span>\<span class="nv">hat</span><span class="p">{</span><span class="nv">a</span><span class="p">}</span><span class="o">||^</span><span class="mi">2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span>\<span class="nv">lambda</span><span class="w"> </span><span class="o">||</span><span class="nv">h</span><span class="o">||</span>\<span class="nv">_1</span><span class="p">$$</span>
+稀疏编码<span class="w"> </span><span class="p">$</span><span class="nv">h</span><span class="p">$</span><span class="w"> </span>提供可解释的特征。
+
+<span class="o">**</span>字典学习<span class="o">**</span>：
+
+学习过完备字典<span class="w"> </span><span class="p">$</span><span class="nv">D</span><span class="p">$</span><span class="w"> </span>：
+<span class="p">$$</span><span class="nv">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">Dh</span><span class="w"> </span><span class="o">+</span><span class="w"> </span>\<span class="nv">epsilon</span><span class="p">$$</span>
+其中<span class="w"> </span><span class="p">$</span><span class="nv">h</span><span class="p">$</span><span class="w"> </span>是稀疏系数。
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.2</span><span class="o">.</span><span class="mi">5</span><span class="w"> </span>神经元探针
+
+<span class="o">**</span>线性探针<span class="o">**</span>：
+
+训练线性分类器预测属性：
+<span class="p">$$</span><span class="nv">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">Wa</span>\<span class="nv">_l</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nv">b</span><span class="p">$$</span>
+其中<span class="w"> </span><span class="p">$</span><span class="nv">a</span>\<span class="nv">_l</span><span class="p">$</span><span class="w"> </span>是第<span class="w"> </span><span class="p">$</span><span class="nv">l</span><span class="p">$</span><span class="w"> </span>层的激活。
+
+<span class="o">**</span>非线性探针<span class="o">**</span>：
+
+使用更复杂的探针：
+
+<span class="o">-</span><span class="w"> </span><span class="nv">MLP探针</span>
+<span class="o">-</span><span class="w"> </span>注意力探针
+<span class="o">-</span><span class="w"> </span>图神经网络探针
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.2</span><span class="o">.</span><span class="mi">6</span><span class="w"> </span>分布式表示分析
+
+<span class="o">**</span>概念的分布式编码<span class="o">**</span>：
+
+概念不是由单个神经元表示，而是由激活模式表示：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">Concept</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\\<span class="p">{</span><span class="nv">a</span>\<span class="nv">_i</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span>\<span class="nv">in</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">subset</span><span class="p">}</span>\\<span class="p">}$$</span>
+<span class="o">**</span>叠加假设<span class="o">**</span>：
+
+多个概念可以叠加在同一组神经元上：
+<span class="p">$$</span><span class="nv">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nv">sum</span>\<span class="nv">_i</span><span class="w"> </span>\<span class="nv">alpha</span>\<span class="nv">_i</span><span class="w"> </span>\<span class="nv">cdot</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">concept</span><span class="p">}</span>\<span class="nv">_i</span><span class="p">$$</span>
+<span class="o">###</span><span class="w"> </span>练习<span class="w"> </span><span class="mf">11.2</span>
+
+构建神经元分析工具：
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>激活提取<span class="o">**</span>（<span class="mi">25</span>分）：
+<span class="o">-</span><span class="w"> </span>高效提取激活
+<span class="o">-</span><span class="w"> </span>支持大规模分析
+<span class="o">-</span><span class="w"> </span>处理不同层类型
+
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>功能识别<span class="o">**</span>（<span class="mi">25</span>分）：
+<span class="o">-</span><span class="w"> </span>发现特征神经元
+<span class="o">-</span><span class="w"> </span>聚类相似神经元
+<span class="o">-</span><span class="w"> </span>量化神经元功能
+
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>消融实验<span class="o">**</span>（<span class="mi">25</span>分）：
+<span class="o">-</span><span class="w"> </span>实现精确消融
+<span class="o">-</span><span class="w"> </span>批量实验框架
+<span class="o">-</span><span class="w"> </span>效果评估
+
+<span class="mi">4</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>可视化展示<span class="o">**</span>（<span class="mi">25</span>分）：
+<span class="o">-</span><span class="w"> </span>神经元激活图
+<span class="o">-</span><span class="w"> </span>功能网络图
+<span class="o">-</span><span class="w"> </span>交互式探索
+
+<span class="o">&lt;</span><span class="nv">details</span><span class="w"> </span><span class="nv">markdown</span><span class="o">=</span><span class="s">&quot;1&quot;</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="nv">summary</span><span class="o">&gt;</span>练习答案<span class="o">&lt;/</span><span class="nv">summary</span><span class="o">&gt;</span>
+
+<span class="o">**</span>神经元分析工具设计<span class="o">**</span>：
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>分层激活提取<span class="o">**</span>：
+
+高效提取框架：
+</code></pre></div>
+
+<p>激活缓存：</p>
+<ul>
+<li>Ring buffer设计</li>
+<li>内存映射文件</li>
+<li>压缩存储</li>
+</ul>
+<p>并行提取：</p>
+<ul>
+<li>多GPU并行</li>
+<li>异步IO</li>
+<li>流式处理</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>数据组织：
+</code></pre></div>
+
+<p>HDF5格式：
+   /layer_0/
+     /neurons [N, D]
+     /metadata
+   /layer_1/
+     ...
+   ```</p>
+<ol start="2">
+<li><strong>智能功能识别</strong>：</li>
+</ol>
+<p>特征检测算法：</p>
+<div class="codehilite"><pre><span></span><code>概念神经元：
+
+1. 收集最大激活样本
+2. 提取共同特征
+3. 验证特异性
+
+相关性分析：
+
+- Pearson相关
+- 互信息
+- 因果关系
+</code></pre></div>
+
+<p>功能量化：</p>
+<div class="codehilite"><pre><span></span><code>得分计算：
+specificity = std(activations) / mean(activations)
+consistency = correlation(activation_pattern)
+importance = ablation_effect
+</code></pre></div>
+
+<ol start="3">
+<li><strong>系统化消融</strong>：</li>
+</ol>
+<p>实验框架：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">消融策略</span><span class="err">：</span>
+
+<span class="o">-</span><span class="w"> </span><span class="n">零化</span><span class="err">：</span><span class="n">a</span><span class="o">[</span><span class="n">n</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="o">-</span><span class="w"> </span><span class="n">均值替换</span><span class="err">：</span><span class="n">a</span><span class="o">[</span><span class="n">n</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mean</span><span class="p">(</span><span class="n">a</span><span class="o">[</span><span class="n">n</span><span class="o">]</span><span class="p">)</span>
+<span class="o">-</span><span class="w"> </span><span class="n">噪声注入</span><span class="err">：</span><span class="n">a</span><span class="o">[</span><span class="n">n</span><span class="o">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">noise</span>
+
+<span class="n">批量实验</span><span class="err">：</span>
+<span class="k">for</span><span class="w"> </span><span class="n">neurons</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nl">combinations</span><span class="p">:</span>
+<span class="w">    </span><span class="k">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ablate_and_evaluate</span><span class="p">(</span><span class="n">neurons</span><span class="p">)</span>
+<span class="w">    </span><span class="n">save_result</span><span class="p">(</span><span class="k">result</span><span class="p">)</span>
+</code></pre></div>
+
+<p>效果度量：
+   ```</p>
+<ul>
+<li>任务性能降低</li>
+<li>表示变化</li>
+<li>下游影响</li>
+<li>恢复能力</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="mf">4.</span><span class="w"> </span><span class="o">**</span><span class="n">交互可视化系统</span><span class="o">**</span><span class="err">：</span>
+
+<span class="n">神经元视图</span><span class="err">：</span>
+</code></pre></div>
+
+<ol>
+<li>
+<p>激活热力图</p>
+<ul>
+<li>时间序列</li>
+<li>输入响应</li>
+<li>层间对比</li>
+</ul>
+</li>
+<li>
+<p>功能网络</p>
+<ul>
+<li>节点：神经元</li>
+<li>边：功能相关性</li>
+<li>社区：功能模块</li>
+</ul>
+</li>
+<li>
+<p>3D嵌入</p>
+<ul>
+<li>t-SNE/UMAP</li>
+<li>功能聚类</li>
+<li>动态演化</li>
+</ul>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>交互功能：
+</code></pre></div>
+
+<ul>
+<li>神经元选择</li>
+<li>实时消融</li>
+<li>样本浏览</li>
+<li>比较分析</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>这个工具提供了全面的神经元级别分析能力，支持深入的模型解释研究。
+
+<span class="o">&lt;/</span><span class="nv">details</span><span class="o">&gt;</span>
+
+<span class="o">###</span><span class="w"> </span>⚡<span class="w"> </span>设计选择
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>单个<span class="nv">vs集体</span><span class="o">**</span>：单神经元简单，集体更准确
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>线性<span class="nv">vs非线性</span><span class="o">**</span>：线性可解释，非线性表达力强
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>稀疏<span class="nv">vs密集</span><span class="o">**</span>：稀疏可解释，密集信息丰富
+<span class="mi">4</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>局部<span class="nv">vs全局</span><span class="o">**</span>：局部精确，全局完整
+
+<span class="o">###</span><span class="w"> </span>🔬<span class="w"> </span>研究方向
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>多尺度分析<span class="o">**</span>：从神经元到模块的层次分析
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>因果发现<span class="o">**</span>：建立神经元间的因果关系
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>可塑性研究<span class="o">**</span>：神经元功能的动态变化
+<span class="mi">4</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>跨模型比较<span class="o">**</span>：不同模型的神经元对应
+
+<span class="o">---</span>
+
+<span class="p">[</span>←<span class="w"> </span>上一节：注意力分析<span class="p">](</span><span class="o">#</span><span class="nv">section1</span><span class="p">)</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="p">[</span>下一节：探测任务<span class="w"> </span>→<span class="p">](</span><span class="o">#</span><span class="nv">section3</span><span class="p">)</span>
+
+<span class="o">##</span><span class="w"> </span><span class="mf">11.3</span><span class="w"> </span>探测任务与表示分析
+
+通过设计探测任务来理解模型学到的内部表示。
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.3</span><span class="o">.</span><span class="mi">1</span><span class="w"> </span>探测任务设计
+
+<span class="o">**</span>语言学探测<span class="o">**</span>：
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>词性标注探测<span class="o">**</span>：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">POS</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">f</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">probe</span><span class="p">}(</span><span class="nv">h</span>\<span class="nv">_</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">word</span><span class="p">}})$$</span>
+
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>句法树深度<span class="o">**</span>：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">depth</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">g</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">probe</span><span class="p">}(</span><span class="nv">h</span>\<span class="nv">_</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="k">to</span><span class="nv">ken</span><span class="p">}})$$</span>
+
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>依存关系<span class="o">**</span>：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">dep</span><span class="p">}(</span><span class="nv">i</span><span class="p">,</span><span class="nv">j</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">r</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">probe</span><span class="p">}(</span><span class="nv">h</span>\<span class="nv">_i</span><span class="p">,</span><span class="w"> </span><span class="nv">h</span>\<span class="nv">_j</span><span class="p">)$$</span>
+<span class="o">**</span>语义探测<span class="o">**</span>：
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>语义角色<span class="o">**</span>：
+预测论元角色
+
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>实体类型<span class="o">**</span>：
+识别实体类别
+
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>关系抽取<span class="o">**</span>：
+发现实体间关系
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.3</span><span class="o">.</span><span class="mi">2</span><span class="w"> </span>探针架构
+
+<span class="o">**</span>线性探针<span class="o">**</span>：
+
+最简单的探针：
+<span class="p">$$</span><span class="nv">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">Wh</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nv">b</span><span class="p">$$</span>
+优点：可解释性强
+缺点：表达能力有限
+
+<span class="o">**</span><span class="nv">MLP探针</span><span class="o">**</span>：
+<span class="p">$$</span><span class="nv">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">W</span>\<span class="nv">_2</span><span class="w"> </span>\<span class="nv">cdot</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">ReLU</span><span class="p">}(</span><span class="nv">W</span>\<span class="nv">_1</span><span class="w"> </span><span class="nv">h</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nv">b</span>\<span class="nv">_1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nv">b</span>\<span class="nv">_2</span><span class="p">$$</span>
+平衡表达力和复杂度。
+
+<span class="o">**</span>结构化探针<span class="o">**</span>：
+
+针对结构化输出：
+
+<span class="o">-</span><span class="w"> </span>序列标注：<span class="nv">CRF层</span>
+<span class="o">-</span><span class="w"> </span>树结构：图神经网络
+<span class="o">-</span><span class="w"> </span>关系：双仿射注意力
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.3</span><span class="o">.</span><span class="mi">3</span><span class="w"> </span>表示相似度分析
+
+<span class="o">**</span>中心核对齐（<span class="nv">CKA</span>）<span class="o">**</span>：
+
+衡量两个表示的相似度：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">CKA</span><span class="p">}(</span><span class="nv">X</span><span class="p">,</span><span class="w"> </span><span class="nv">Y</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nv">frac</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">HSIC</span><span class="p">}(</span><span class="nv">X</span><span class="p">,</span><span class="w"> </span><span class="nv">Y</span><span class="p">)}{</span>\<span class="nv">sqrt</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">HSIC</span><span class="p">}(</span><span class="nv">X</span><span class="p">,</span><span class="w"> </span><span class="nv">X</span><span class="p">)</span><span class="w"> </span>\<span class="nv">cdot</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">HSIC</span><span class="p">}(</span><span class="nv">Y</span><span class="p">,</span><span class="w"> </span><span class="nv">Y</span><span class="p">)}}$$</span>
+其中<span class="nv">HSIC是Hilbert</span><span class="o">-</span><span class="nv">Schmidt独立性准则</span>。
+
+<span class="o">**</span>表示相似度矩阵<span class="o">**</span>：
+
+跨层相似度：
+<span class="p">$$</span><span class="nv">S</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">ij</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">similarity</span><span class="p">}(</span><span class="nv">h</span><span class="o">^</span><span class="p">{(</span><span class="nv">i</span><span class="p">)},</span><span class="w"> </span><span class="nv">h</span><span class="o">^</span><span class="p">{(</span><span class="nv">j</span><span class="p">)})$$</span>
+可视化为热力图。
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.3</span><span class="o">.</span><span class="mi">4</span><span class="w"> </span>信息论分析
+
+<span class="o">**</span>互信息估计<span class="o">**</span>：
+
+表示和目标之间的互信息：
+<span class="p">$$</span><span class="nf">I</span><span class="p">(</span><span class="nv">H</span><span class="p">;</span><span class="w"> </span><span class="nv">Y</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nv">mathbb</span><span class="p">{</span><span class="nv">E</span><span class="p">}</span>\<span class="nv">_</span><span class="p">{</span><span class="nf">p</span><span class="p">(</span><span class="nv">h</span><span class="p">,</span><span class="nv">y</span><span class="p">)}</span>\<span class="nv">left</span><span class="p">[</span>\<span class="nv">log</span><span class="w"> </span>\<span class="nv">frac</span><span class="p">{</span><span class="nf">p</span><span class="p">(</span><span class="nv">h</span><span class="p">,</span><span class="nv">y</span><span class="p">)}{</span><span class="nf">p</span><span class="p">(</span><span class="nv">h</span><span class="p">)</span><span class="nf">p</span><span class="p">(</span><span class="nv">y</span><span class="p">)}</span>\<span class="nv">right</span><span class="p">]$$</span>
+使用变分界或<span class="nv">MINE估计</span>。
+
+<span class="o">**</span>信息瓶颈<span class="o">**</span>：
+
+分析信息压缩：
+<span class="p">$$</span>\<span class="nv">mathcal</span><span class="p">{</span><span class="nv">L</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">I</span><span class="p">(</span><span class="nv">X</span><span class="p">;</span><span class="w"> </span><span class="nv">H</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span>\<span class="nv">beta</span><span class="w"> </span><span class="nf">I</span><span class="p">(</span><span class="nv">H</span><span class="p">;</span><span class="w"> </span><span class="nv">Y</span><span class="p">)$$</span>
+权衡压缩和预测。
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.3</span><span class="o">.</span><span class="mi">5</span><span class="w"> </span>控制实验
+
+<span class="o">**</span>最小对比集<span class="o">**</span>：
+
+设计最小差异的输入对：
+</code></pre></div>
+
+<p>正确：The key to the cabinet is on the table.
+错误：The key to the cabinet are on the table.</p>
+<div class="codehilite"><pre><span></span><code>分析表示差异。
+
+**系统性泛化测试**：
+
+测试组合泛化能力：
+
+-<span class="w"> </span>新组合
+-<span class="w"> </span>长度泛化
+-<span class="w"> </span>结构泛化
+
+###<span class="w"> </span>11.3.6<span class="w"> </span>时序分析
+
+**表示演化**：
+
+跟踪训练过程中表示的变化：
+$$\Delta\_t<span class="w"> </span>=<span class="w"> </span>||h\_t<span class="w"> </span>-<span class="w"> </span>h\_{t-1}||$$
+识别学习阶段。
+
+**层间信息流**：
+
+分析信息如何在层间传播：
+$$I\_{\text{flow}}<span class="w"> </span>=<span class="w"> </span>I(h^{(l)};<span class="w"> </span>y)<span class="w"> </span>-<span class="w"> </span>I(h^{(l-1)};<span class="w"> </span>y)$$
+###<span class="w"> </span>练习<span class="w"> </span>11.3
+
+设计探测实验系统：
+
+1.<span class="w"> </span>**探测设计**（25分）：
+<span class="w">   </span>-<span class="w"> </span>设计多样化探测任务
+<span class="w">   </span>-<span class="w"> </span>选择合适的探针
+<span class="w">   </span>-<span class="w"> </span>准备评估数据
+
+2.<span class="w"> </span>**表示提取**（25分）：
+<span class="w">   </span>-<span class="w"> </span>高效提取表示
+<span class="w">   </span>-<span class="w"> </span>处理不同粒度
+<span class="w">   </span>-<span class="w"> </span>支持对比分析
+
+3.<span class="w"> </span>**分析工具**（25分）：
+<span class="w">   </span>-<span class="w"> </span>实现相似度度量
+<span class="w">   </span>-<span class="w"> </span>信息论分析
+<span class="w">   </span>-<span class="w"> </span>统计显著性测试
+
+4.<span class="w"> </span>**可视化**（25分）：
+<span class="w">   </span>-<span class="w"> </span>表示演化图
+<span class="w">   </span>-<span class="w"> </span>相似度矩阵
+<span class="w">   </span>-<span class="w"> </span>探测结果展示
+
+<span class="nt">&lt;details</span><span class="w"> </span><span class="na">markdown=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;summary&gt;</span>练习答案<span class="nt">&lt;/summary&gt;</span>
+
+**探测实验系统设计**：
+
+1.<span class="w"> </span>**多层次探测设计**：
+
+<span class="w">   </span>任务体系：
+</code></pre></div>
+
+<p>表层任务：</p>
+<ul>
+<li>词性标注（准确率&gt;95%）</li>
+<li>命名实体（F1&gt;90%）</li>
+</ul>
+<p>中层任务：</p>
+<ul>
+<li>句法解析（LAS&gt;85%）</li>
+<li>语义角色（F1&gt;80%）</li>
+</ul>
+<p>深层任务：</p>
+<ul>
+<li>逻辑推理（准确率&gt;70%）</li>
+<li>常识推理（准确率&gt;60%）</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>   探针选择：
+</code></pre></div>
+
+<p>任务复杂度 → 探针复杂度</p>
+<ul>
+<li>简单：线性探针</li>
+<li>中等：2层MLP</li>
+<li>复杂：任务特定架构</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="mf">2.</span><span class="w"> </span><span class="o">**</span><span class="n">智能表示提取</span><span class="o">**</span><span class="err">：</span>
+
+<span class="w">   </span><span class="n">多粒度提取</span><span class="err">：</span>
+</code></pre></div>
+
+<p>Token级：每个位置的表示
+Span级：开始和结束的拼接/平均
+句子级：[CLS]或平均池化</p>
+<p>缓存策略：</p>
+<ul>
+<li>LRU缓存常用表示</li>
+<li>增量计算</li>
+<li>并行提取</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>   对比框架：
+</code></pre></div>
+
+<p>A/B测试：</p>
+<ul>
+<li>不同层的表示</li>
+<li>不同模型</li>
+<li>不同训练阶段</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="mf">3.</span><span class="w"> </span><span class="o">**</span><span class="n">分析工具套件</span><span class="o">**</span><span class="err">：</span>
+
+<span class="w">   </span><span class="n">相似度计算</span><span class="err">：</span>
+</code></pre></div>
+
+<p>度量集合：</p>
+<ul>
+<li>余弦相似度</li>
+<li>CKA（线性/RBF核）</li>
+<li>Procrustes距离</li>
+<li>互信息估计</li>
+</ul>
+<p>显著性检验：</p>
+<ul>
+<li>Bootstrap置信区间</li>
+<li>排列测试</li>
+<li>多重比较校正</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>   信息流分析：
+</code></pre></div>
+
+<p>层间信息：
+for l in layers:
+    mi[l] = estimate_mi(h[l], target)
+    gain[l] = mi[l] - mi[l-1]</p>
+<p>路径分析：</p>
+<ul>
+<li>直接路径</li>
+<li>残差贡献</li>
+<li>注意力路径</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="mf">4.</span><span class="w"> </span><span class="o">**</span><span class="n">综合可视化</span><span class="o">**</span><span class="err">：</span>
+
+<span class="w">   </span><span class="n">演化视图</span><span class="err">：</span>
+</code></pre></div>
+
+<p>时间轴可视化：</p>
+<ul>
+<li>x轴：训练步数</li>
+<li>y轴：探测性能</li>
+<li>多线：不同任务</li>
+</ul>
+<p>动画展示：</p>
+<ul>
+<li>表示空间演化</li>
+<li>任务性能变化</li>
+<li>关键转折点</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>   矩阵展示：
+</code></pre></div>
+
+<p>层间相似度：</p>
+<ul>
+<li>热力图</li>
+<li>聚类树</li>
+<li>网络图</li>
+</ul>
+<p>任务相关性：</p>
+<ul>
+<li>任务-层矩阵</li>
+<li>最优层标记</li>
+<li>置信度编码</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>这个系统支持全面的表示分析，帮助理解模型的内部知识组织。
+
+<span class="o">&lt;/</span><span class="nv">details</span><span class="o">&gt;</span>
+
+<span class="o">###</span><span class="w"> </span>⚡<span class="w"> </span>设计选择
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>探针复杂度<span class="o">**</span>：简单探针可解释，复杂探针准确
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>任务选择<span class="o">**</span>：基础任务普适，高级任务针对性强
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>静态<span class="nv">vs动态</span><span class="o">**</span>：静态分析快，动态分析全面
+<span class="mi">4</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>定量<span class="nv">vs定性</span><span class="o">**</span>：定量客观，定性直观
+
+<span class="o">###</span><span class="w"> </span>🔬<span class="w"> </span>研究方向
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>因果探测<span class="o">**</span>：超越相关性的因果理解
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>最小探针<span class="o">**</span>：找到最简单的充分探针
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>主动探测<span class="o">**</span>：通过干预主动探索表示
+<span class="mi">4</span><span class="o">.</span><span class="w"> </span><span class="o">**</span>跨语言探测<span class="o">**</span>：多语言模型的统一理解
+
+<span class="o">---</span>
+
+<span class="p">[</span>←<span class="w"> </span>上一节：神经元解释<span class="p">](</span><span class="o">#</span><span class="nv">section2</span><span class="p">)</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="p">[</span>下一节：因果追踪<span class="w"> </span>→<span class="p">](</span><span class="o">#</span><span class="nv">section4</span><span class="p">)</span>
+
+<span class="o">##</span><span class="w"> </span><span class="mf">11.4</span><span class="w"> </span>因果追踪与电路发现
+
+通过因果干预和电路分析，理解模型的计算机制。
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.4</span><span class="o">.</span><span class="mi">1</span><span class="w"> </span>因果追踪方法
+
+<span class="o">**</span>激活补丁<span class="o">**</span>：
+
+将干净运行的激活<span class="s">&quot;补丁&quot;</span>到损坏运行中：
+<span class="p">$$</span><span class="nv">h</span>\<span class="nv">_i</span><span class="o">^</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">patched</span><span class="p">}}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">h</span>\<span class="nv">_i</span><span class="o">^</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">clean</span><span class="p">}}$$</span>
+测量输出恢复程度：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">Recovery</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nv">frac</span><span class="p">{</span><span class="nv">L</span><span class="o">^</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">patched</span><span class="p">}}</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nv">L</span><span class="o">^</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">corrupted</span><span class="p">}}}{</span><span class="nv">L</span><span class="o">^</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">clean</span><span class="p">}}</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nv">L</span><span class="o">^</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">corrupted</span><span class="p">}}}$$</span>
+<span class="o">**</span>路径补丁<span class="o">**</span>：
+
+不只补丁单个激活，而是整条路径：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">Path</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\\<span class="p">{</span><span class="nv">h</span>\<span class="nv">_i</span><span class="o">^</span><span class="p">{(</span><span class="nv">l</span><span class="p">)}</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nv">l</span><span class="w"> </span>\<span class="nv">in</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">layers</span><span class="p">},</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span>\<span class="nv">in</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">positions</span><span class="p">}</span>\\<span class="p">}$$</span>
+<span class="o">###</span><span class="w"> </span><span class="mf">11.4</span><span class="o">.</span><span class="mi">2</span><span class="w"> </span>电路发现
+
+<span class="o">**</span>最小充分电路<span class="o">**</span>：
+
+找到完成特定任务的最小组件集：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">Circuit</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nv">arg</span>\<span class="nv">min</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">S</span><span class="p">}</span><span class="w"> </span><span class="o">|</span><span class="nv">S</span><span class="o">|</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="w"> </span><span class="nv">s</span><span class="o">.</span><span class="nv">t</span><span class="o">.</span><span class="w"> </span><span class="p">}</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">Performance</span><span class="p">}(</span><span class="nv">S</span><span class="p">)</span><span class="w"> </span>\<span class="nv">geq</span><span class="w"> </span>\<span class="nv">theta</span><span class="p">$$</span>
+<span class="o">**</span>迭代剪枝<span class="o">**</span>：
+
+<span class="mi">1</span><span class="o">.</span><span class="w"> </span>从完整模型开始
+<span class="mi">2</span><span class="o">.</span><span class="w"> </span>逐步移除组件
+<span class="mi">3</span><span class="o">.</span><span class="w"> </span>保留关键组件
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.4</span><span class="o">.</span><span class="mi">3</span><span class="w"> </span>信息流分析
+
+<span class="o">**</span>直接效应<span class="o">**</span>：
+
+组件<span class="w"> </span><span class="p">$</span><span class="nv">A</span><span class="p">$</span><span class="w"> </span>对<span class="w"> </span><span class="p">$</span><span class="nv">B</span><span class="p">$</span><span class="w"> </span>的直接影响：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">DE</span><span class="p">}(</span><span class="nv">A</span><span class="w"> </span>\<span class="nv">rightarrow</span><span class="w"> </span><span class="nv">B</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nv">frac</span><span class="p">{</span>\<span class="nv">partial</span><span class="w"> </span><span class="nv">B</span><span class="p">}{</span>\<span class="nv">partial</span><span class="w"> </span><span class="nv">A</span><span class="p">}$$</span>
+<span class="o">**</span>总效应<span class="o">**</span>：
+
+包括所有路径的影响：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">TE</span><span class="p">}(</span><span class="nv">A</span><span class="w"> </span>\<span class="nv">rightarrow</span><span class="w"> </span><span class="nv">B</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>\<span class="nv">sum</span>\<span class="nv">_</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">paths</span><span class="p">}}</span><span class="w"> </span>\<span class="nv">prod</span>\<span class="nv">_</span><span class="p">{(</span><span class="nv">i</span><span class="p">,</span><span class="nv">j</span><span class="p">)</span><span class="w"> </span>\<span class="nv">in</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">path</span><span class="p">}}</span><span class="w"> </span>\<span class="nv">text</span><span class="p">{</span><span class="nv">DE</span><span class="p">}(</span><span class="nv">i</span><span class="w"> </span>\<span class="nv">rightarrow</span><span class="w"> </span><span class="nv">j</span><span class="p">)$$</span>
+<span class="o">###</span><span class="w"> </span><span class="mf">11.4</span><span class="o">.</span><span class="mi">4</span><span class="w"> </span>功能定位
+
+<span class="o">**</span>间接对象识别（<span class="nv">IOI</span>）任务<span class="o">**</span>：
+</code></pre></div>
+
+<p>输入："Mary gave the ball to John. John gave the ball to"
+目标：预测"Mary"</p>
+<div class="codehilite"><pre><span></span><code>发现的电路组件：
+
+<span class="k">-</span> 名字识别头
+<span class="k">-</span> 位置追踪头
+<span class="k">-</span> 信息路由层
+
+**事实回忆电路**：
+</code></pre></div>
+
+<p>输入："The capital of France is"
+目标：预测"Paris"</p>
+<div class="codehilite"><pre><span></span><code>关键组件：
+
+<span class="o">-</span><span class="w"> </span>事实存储层
+<span class="o">-</span><span class="w"> </span>检索机制
+<span class="o">-</span><span class="w"> </span>输出映射
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.4</span><span class="o">.</span><span class="mi">5</span><span class="w"> </span>自动电路发现
+
+<span class="o">**</span>梯度<span class="nv">based方法</span><span class="o">**</span>：
+
+使用梯度信息识别重要连接：
+<span class="p">$$</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">Importance</span><span class="p">}</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">ij</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">|</span><span class="nv">w</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">ij</span><span class="p">}</span><span class="w"> </span>\<span class="nv">cdot</span><span class="w"> </span>\<span class="nv">frac</span><span class="p">{</span>\<span class="nv">partial</span><span class="w"> </span><span class="nv">L</span><span class="p">}{</span>\<span class="nv">partial</span><span class="w"> </span><span class="nv">w</span>\<span class="nv">_</span><span class="p">{</span><span class="nv">ij</span><span class="p">}}</span><span class="o">|</span><span class="p">$$</span>
+<span class="o">**</span>掩码学习<span class="o">**</span>：
+
+学习二进制掩码：
+<span class="p">$$</span><span class="nv">W</span>\<span class="nv">_</span><span class="p">{</span>\<span class="nv">text</span><span class="p">{</span><span class="nv">effective</span><span class="p">}}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">W</span><span class="w"> </span>\<span class="nv">odot</span><span class="w"> </span>\<span class="nf">sigma</span><span class="p">(</span>\<span class="nv">alpha</span><span class="p">)$$</span>
+其中<span class="w"> </span><span class="p">$</span>\<span class="nv">alpha</span><span class="p">$</span><span class="w"> </span>是可学习参数。
+
+<span class="o">###</span><span class="w"> </span><span class="mf">11.4</span><span class="o">.</span><span class="mi">6</span><span class="w"> </span>电路组合性
+
+<span class="o">**</span>子电路复用<span class="o">**</span>：
+
+不同任务共享子电路：
+
+<span class="o">-</span><span class="w"> </span>注意力电路
+<span class="o">-</span><span class="w"> </span>特征提取电路
+<span class="o">-</span><span class="w"> </span>输出生成电路
+
+<span class="o">**</span>电路层次结构<span class="o">**</span>：
+</code></pre></div>
+
+<p>高级电路
+├── 中级电路1
+│   ├── 基础电路A
+│   └── 基础电路B
+└── 中级电路2
+    └── 基础电路C</p>
+<div class="codehilite"><pre><span></span><code>###<span class="w"> </span>练习<span class="w"> </span>11.4
+
+实现因果追踪系统：
+
+1.<span class="w"> </span>**干预工具**（25分）：
+<span class="w">   </span>-<span class="w"> </span>实现激活补丁
+<span class="w">   </span>-<span class="w"> </span>支持批量实验
+<span class="w">   </span>-<span class="w"> </span>精确控制干预
+
+2.<span class="w"> </span>**电路发现**（25分）：
+<span class="w">   </span>-<span class="w"> </span>实现自动发现
+<span class="w">   </span>-<span class="w"> </span>评估电路充分性
+<span class="w">   </span>-<span class="w"> </span>可视化电路结构
+
+3.<span class="w"> </span>**因果分析**（25分）：
+<span class="w">   </span>-<span class="w"> </span>计算因果效应
+<span class="w">   </span>-<span class="w"> </span>构建因果图
+<span class="w">   </span>-<span class="w"> </span>验证因果关系
+
+4.<span class="w"> </span>**应用案例**（25分）：
+<span class="w">   </span>-<span class="w"> </span>分析具体任务
+<span class="w">   </span>-<span class="w"> </span>发现功能电路
+<span class="w">   </span>-<span class="w"> </span>验证可复现性
+
+<span class="nt">&lt;details</span><span class="w"> </span><span class="na">markdown=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;summary&gt;</span>练习答案<span class="nt">&lt;/summary&gt;</span>
+
+**因果追踪系统实现**：
+
+1.<span class="w"> </span>**精确干预工具**：
+
+<span class="w">   </span>补丁框架：
+</code></pre></div>
+
+<p>干预接口：
+class Intervention:
+    def <strong>init</strong>(self, model):
+        self.hooks = []
+        self.cache = {}</p>
+<div class="codehilite"><pre><span></span><code><span class="n">def</span><span class="w"> </span><span class="n">patch</span><span class="p">(</span><span class="n">self</span><span class="p">,</span><span class="w"> </span><span class="n">layer</span><span class="p">,</span><span class="w"> </span><span class="n">position</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="o">:</span>
+<span class="w">    </span><span class="n">hook</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lambda</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="nl">o:</span><span class="w"> </span><span class="n">self</span><span class="p">.</span><span class="n">modify</span><span class="p">(</span><span class="n">o</span><span class="p">,</span><span class="w"> </span><span class="n">position</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<span class="w">    </span><span class="n">self</span><span class="p">.</span><span class="n">hooks</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">register_hook</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span><span class="w"> </span><span class="n">hook</span><span class="p">))</span>
+</code></pre></div>
+
+<p>批量实验：
+for path in candidate_paths:
+    result = evaluate_with_patch(path)
+    importance[path] = result.recovery</p>
+<div class="codehilite"><pre><span></span><code>   控制粒度：
+
+   <span class="k">-</span> 神经元级
+   <span class="k">-</span> 注意力头级
+   <span class="k">-</span> 层级
+   <span class="k">-</span> 路径级
+
+2. **自动电路发现**：
+
+   迭代发现算法：
+</code></pre></div>
+
+<p>初始化：circuit = full_model</p>
+<p>while circuit.size &gt; target_size:
+    candidates = get_prunable_components(circuit)</p>
+<div class="codehilite"><pre><span></span><code>for component in candidates:
+    temp_circuit = circuit - component
+    if performance(temp_circuit) &gt; threshold:
+        circuit = temp_circuit
+        break
+</code></pre></div>
+
+<p>return circuit</p>
+<div class="codehilite"><pre><span></span><code>   充分性验证：
+   ```
+   测试集：
+
+   - 分布内样本
+   - 分布外样本
+   - 对抗样本
+
+   指标：
+
+   - 任务准确率
+   - 激活相似度
+   - 输出分布KL
+</code></pre></div>
+
+<ol start="3">
+<li><strong>因果效应计算</strong>：</li>
+</ol>
+<p>直接效应：</p>
+<div class="codehilite"><pre><span></span><code>   def direct_effect(source, target, intervention):
+       baseline = model(input)
+       intervened = model(input, do(source=intervention))
+       return measure_change(baseline, intervened, target)
+   ```
+
+   因果图构建：
+   ```
+   图结构学习：
+
+   1. 计算所有成对因果效应
+   2. 应用阈值过滤弱连接
+   3. 检测并移除循环
+   4. 验证马尔可夫性质
+</code></pre></div>
+
+<ol start="4">
+<li><strong>IOI任务分析</strong>：</li>
+</ol>
+<p>电路组件：</p>
+<div class="codehilite"><pre><span></span><code>   发现的电路：
+
+   1. 名字检测器（Layer 2-3）
+      - 识别专有名词
+      - 编码位置
+
+   2. 关系追踪器（Layer 5-7）
+      - 追踪谁给谁
+      - 维护状态
+
+   3. 复制机制（Layer 9-11）
+      - 从早期层复制名字
+      - 投影到输出
+</code></pre></div>
+
+<p>验证实验：</p>
+<div class="codehilite"><pre><span></span><code>   消融验证：
+
+   - 移除电路：性能降至随机
+   - 保留电路：性能保持90%+
+
+   迁移验证：
+
+   - 相似任务：电路可复用
+   - 不同任务：电路不适用
+</code></pre></div>
+
+<p>这个系统实现了完整的因果分析流程，支持自动发现和验证功能电路。</p>
+</details>
+<h3 id="_2">⚡ 设计选择</h3>
+<ol>
+<li><strong>自动vs手动</strong>：自动发现效率高，手动分析深入</li>
+<li><strong>局部vs全局</strong>：局部分析精确，全局分析完整</li>
+<li><strong>静态vs动态</strong>：静态分析快速，动态分析准确</li>
+<li><strong>充分vs必要</strong>：充分电路保证功能，必要电路最小化</li>
+</ol>
+<h3 id="_3">🔬 研究方向</h3>
+<ol>
+<li><strong>电路进化</strong>：训练过程中电路的形成</li>
+<li><strong>电路泛化</strong>：电路的任务迁移能力</li>
+<li><strong>电路编辑</strong>：通过修改电路改变模型行为</li>
+<li><strong>电路理论</strong>：建立电路的数学理论</li>
+</ol>
+<hr />
+<p><a href="#section3">← 上一节：探测任务</a> | <a href="#section5">下一节：机械解释性 →</a></p>
+<h2 id="115">11.5 机械解释性前沿</h2>
+<p>机械解释性致力于完全理解神经网络的计算机制。</p>
+<h3 id="1151">11.5.1 特征分解</h3>
+<p><strong>超级位置假设</strong>：</p>
+<p>神经网络在比神经元数量更高的维度中表示特征：
+$$\text{Features} = \text{Neurons} \times \text{Superposition}$$
+多个特征可以叠加在同一组神经元上。</p>
+<p><strong>稀疏字典学习</strong>：</p>
+<p>学习过完备的特征字典：
+$$\text{activation} = \sum_i \alpha_i \phi_i$$
+其中 $\phi_i$ 是可解释的特征向量。</p>
+<h3 id="1152">11.5.2 计算机制理解</h3>
+<p><strong>变压器电路</strong>：</p>
+<ol>
+<li>
+<p><strong>信息移动</strong>：
+通过注意力移动信息</p>
+</li>
+<li>
+<p><strong>信息写入</strong>：
+通过MLP写入新信息</p>
+</li>
+<li>
+<p><strong>信息组合</strong>：
+通过残差流组合信息</p>
+</li>
+</ol>
+<p><strong>算法推断</strong>：</p>
+<p>从权重推断实现的算法：</p>
+<ul>
+<li>排序算法</li>
+<li>搜索算法</li>
+<li>优化算法</li>
+</ul>
+<h3 id="1153">11.5.3 普遍性与多样性</h3>
+<p><strong>功能普遍性</strong>：</p>
+<p>不同模型中发现相似的电路：</p>
+<ul>
+<li>语法处理电路</li>
+<li>数值计算电路</li>
+<li>逻辑推理电路</li>
+</ul>
+<p><strong>实现多样性</strong>：</p>
+<p>同一功能的不同实现：</p>
+<ul>
+<li>效率差异</li>
+<li>鲁棒性差异</li>
+<li>泛化能力差异</li>
+</ul>
+<h3 id="1154">11.5.4 相变现象</h3>
+<p><strong>能力涌现</strong>：</p>
+<p>随着规模增长突然出现的能力：
+$$P(\text{capability}) = \sigma(a \cdot \log(\text{scale}) - b)$$
+呈S型曲线。</p>
+<p><strong>格罗肯效应</strong>：</p>
+<p>训练过程中的理解相变：</p>
+<ol>
+<li>记忆阶段</li>
+<li>电路形成</li>
+<li>泛化阶段</li>
+</ol>
+<h3 id="1155">11.5.5 对齐与安全</h3>
+<p><strong>欺骗性对齐</strong>：</p>
+<p>模型表面对齐但内部目标不同：</p>
+<div class="codehilite"><pre><span></span><code>观察到的行为 ≠ 真实目标
+</code></pre></div>
+
+<p>需要机械解释来识别。</p>
+<p><strong>目标错误概化</strong>：</p>
+<p>在新环境中目标函数的错误泛化。</p>
+<h3 id="1156">11.5.6 自动解释性</h3>
+<p><strong>AI辅助解释</strong>：</p>
+<p>使用AI系统帮助解释AI：</p>
+<ul>
+<li>自动标注神经元</li>
+<li>生成假设</li>
+<li>设计实验</li>
+</ul>
+<p><strong>可解释性评分</strong>：</p>
+<p>量化解释的质量：
+$$\text{Score} = \alpha \cdot \text{Faithfulness} + \beta \cdot \text{Completeness} + \gamma \cdot \text{Simplicity}$$</p>
+<h3 id="115_1">练习 11.5</h3>
+<p>探索机械解释性方法：</p>
+<ol>
+<li>
+<p><strong>特征发现</strong>（25分）：
+   - 实现稀疏编码
+   - 发现可解释特征
+   - 验证特征有效性</p>
+</li>
+<li>
+<p><strong>机制分析</strong>（25分）：
+   - 分析计算步骤
+   - 推断内部算法
+   - 验证机制假设</p>
+</li>
+<li>
+<p><strong>涌现研究</strong>（25分）：
+   - 追踪能力涌现
+   - 分析相变点
+   - 理解涌现机制</p>
+</li>
+<li>
+<p><strong>安全应用</strong>（25分）：
+   - 检测欺骗行为
+   - 评估对齐程度
+   - 提出改进方案</p>
+</li>
+</ol>
+<details>
+<summary>练习答案</summary>
+<p><strong>机械解释性探索</strong>：</p>
+<ol>
+<li><strong>可解释特征发现</strong>：</li>
+</ol>
+<p>稀疏自编码器：</p>
+<div class="codehilite"><pre><span></span><code>架构设计：
+encoder: d_model → k*d_model (k=4)
+decoder: k*d_model → d_model
+
+损失函数：
+L = MSE(x, x_hat) + λ₁||z||₁ + λ₂||W||₂
+
+训练策略：
+
+<span class="k">-</span> 渐进式增加稀疏度
+<span class="k">-</span> 字典原子正交化
+<span class="k">-</span> 特征重要性排序
+</code></pre></div>
+
+<p>特征验证：</p>
+<div class="codehilite"><pre><span></span><code>可解释性测试：
+
+1. 人类标注一致性
+2. 因果干预验证
+3. 跨模型泛化性
+
+定量指标：
+
+- 激活稀疏度 &lt; 5%
+- 重建误差 &lt; 0.1
+- 特征纯度 &gt; 0.8
+</code></pre></div>
+
+<ol start="2">
+<li><strong>算法逆向工程</strong>：</li>
+</ol>
+<p>计算追踪：</p>
+<div class="codehilite"><pre><span></span><code>以&quot;加法&quot;为例：
+
+1. 输入embedding
+2. 位置编码对齐
+3. 数值特征提取
+4. 进位逻辑实现
+5. 结果组合输出
+
+验证：
+
+- 中间步骤可解释
+- 错误模式符合预期
+- 泛化到大数字
+</code></pre></div>
+
+<p>机制假设检验：</p>
+<div class="codehilite"><pre><span></span><code>假设：模型使用查表+规则
+
+实验设计：
+
+1. 训练数据分析
+2. 泛化测试
+3. 干预实验
+4. 迁移学习
+
+结论：部分查表+学习的规则
+</code></pre></div>
+
+<ol start="3">
+<li><strong>涌现现象分析</strong>：</li>
+</ol>
+<p>能力追踪：</p>
+<div class="codehilite"><pre><span></span><code>监控指标：
+
+- 任务准确率曲线
+- 内部表示突变
+- 电路形成时间
+
+关键观察：
+
+1. 3B参数：基础语法
+2. 7B参数：逻辑推理
+3. 13B参数：抽象概念
+4. 70B参数：创造性
+</code></pre></div>
+
+<p>相变机制：</p>
+<div class="codehilite"><pre><span></span><code>理论模型：
+capacity = f(scale, data, architecture)
+
+临界点特征：
+
+- 损失函数二阶导数峰值
+- 表示空间重组
+- 功能模块化
+</code></pre></div>
+
+<ol start="4">
+<li><strong>安全性检测</strong>：</li>
+</ol>
+<p>欺骗检测器：</p>
+<div class="codehilite"><pre><span></span><code>特征提取：
+
+<span class="k">-</span> 表面行为一致性
+<span class="k">-</span> 内部目标表示
+<span class="k">-</span> 上下文敏感性
+
+检测算法：
+divergence = KL(P_stated || P_internal)
+if divergence &gt; threshold:
+    flag_potential_deception()
+</code></pre></div>
+
+<p>对齐改进：
+   ```
+   方法：</p>
+<ol>
+<li>目标表示正则化</li>
+<li>内部一致性训练</li>
+<li>对抗性对齐测试</li>
+</ol>
+<p>验证：</p>
+<ul>
+<li>减少目标错误泛化</li>
+<li>提高行为一致性</li>
+<li>增强可解释性</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>这个系统推进了机械解释性的前沿，为理解和改进AI系统提供了工具。
+
+&lt;/details&gt;
+
+<span class="gu">##</span># ⚡ 设计选择
+
+1. **完整vs实用**：完整理解困难，实用理解可行
+2. **自底向上vs自顶向下**：底层精确，顶层直观
+3. **通用vs特定**：通用方法广泛，特定方法深入
+4. **理论vs实验**：理论指导，实验验证
+
+<span class="gu">##</span># 🔬 研究方向
+
+1. **完整逆向工程**：完全理解模型的所有计算
+2. **可编程神经网络**：设计特定功能的网络
+3. **形式化验证**：数学证明模型性质
+4. **生物类比**：借鉴神经科学的解释方法
+
+---
+
+[← 上一节：因果追踪](#section4) | [下一节：实践工具 →](#section6)
+
+<span class="gu">##</span> 11.6 可解释性工具与实践
+
+将可解释性技术应用到实际场景中。
+
+<span class="gu">##</span># 11.6.1 开源工具生态
+
+**综合框架**：
+
+1. **Captum（PyTorch）**：
+<span class="k">-</span> 归因方法
+<span class="k">-</span> 神经元分析
+<span class="k">-</span> 层级相关性
+
+2. **TensorFlow Explainability**：
+<span class="k">-</span> 集成梯度
+<span class="k">-</span> SHAP值
+<span class="k">-</span> 概念激活向量
+
+3. **Transformers Interpret**：
+<span class="k">-</span> 注意力可视化
+<span class="k">-</span> 特征归因
+<span class="k">-</span> 预测解释
+
+**专门工具**：
+
+<span class="k">-</span> **BertViz**：BERT注意力可视化
+<span class="k">-</span> **Ecco**：语言模型解释
+<span class="k">-</span> **LIT**：交互式模型理解
+
+<span class="gu">##</span># 11.6.2 解释性流水线
+
+**端到端流程**：
+</code></pre></div>
+
+<ol>
+<li>
+<p>数据准备
+   ↓</p>
+</li>
+<li>
+<p>模型加载
+   ↓</p>
+</li>
+<li>
+<p>特征提取
+   ↓</p>
+</li>
+<li>
+<p>分析计算
+   ↓</p>
+</li>
+<li>
+<p>可视化
+   ↓</p>
+</li>
+<li>
+<p>报告生成</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>**自动化分析**：
+
+批量处理和分析聚合。
+
+<span class="gu">##</span># 11.6.3 应用场景
+
+**模型调试**：
+
+1. **错误分析**：
+   理解模型为什么出错
+
+2. **偏见检测**：
+   发现潜在的偏见
+
+3. **鲁棒性测试**：
+   识别脆弱性
+
+**模型改进**：
+
+1. **知识编辑**：
+   修正错误知识
+
+2. **能力增强**：
+   强化薄弱环节
+
+3. **效率优化**：
+   移除冗余组件
+
+<span class="gu">##</span># 11.6.4 用户界面设计
+
+**交互式探索**：
+
+1. **分层导航**：
+   从概览到细节
+
+2. **联动视图**：
+   多视角同步
+
+3. **实时反馈**：
+   即时显示干预效果
+
+**可定制仪表板**：
+
+根据需求配置视图：
+
+<span class="k">-</span> 研究视角
+<span class="k">-</span> 工程视角
+<span class="k">-</span> 业务视角
+
+<span class="gu">##</span># 11.6.5 最佳实践
+
+**分析原则**：
+
+1. **多角度验证**：
+   不依赖单一方法
+
+2. **统计显著性**：
+   确保结果可靠
+
+3. **可重现性**：
+   记录完整流程
+
+**常见陷阱**：
+
+1. **确认偏见**：
+   只看支持假设的证据
+
+2. **过度解释**：
+   赋予噪声意义
+
+3. **因果谬误**：
+   相关不等于因果
+
+<span class="gu">##</span># 11.6.6 未来展望
+
+**自动化解释**：
+
+AI自动生成解释：
+
+<span class="k">-</span> 自然语言解释
+<span class="k">-</span> 可视化推荐
+<span class="k">-</span> 异常检测
+
+**实时解释**：
+
+推理时提供解释：
+
+<span class="k">-</span> 决策依据
+<span class="k">-</span> 置信度分析
+<span class="k">-</span> 替代方案
+
+**个性化解释**：
+
+针对不同用户：
+
+<span class="k">-</span> 技术细节（研究者）
+<span class="k">-</span> 直观说明（用户）
+<span class="k">-</span> 风险评估（决策者）
+
+<span class="gu">##</span># 练习 11.6
+
+构建可解释性应用：
+
+1. **工具集成**（25分）：
+   <span class="k">-</span> 集成多个工具
+   <span class="k">-</span> 统一接口
+   <span class="k">-</span> 批处理支持
+
+2. **分析流程**（25分）：
+   <span class="k">-</span> 设计标准流程
+   <span class="k">-</span> 自动化分析
+   <span class="k">-</span> 生成报告
+
+3. **交互界面**（25分）：
+   <span class="k">-</span> 设计用户界面
+   <span class="k">-</span> 实现交互功能
+   <span class="k">-</span> 优化用户体验
+
+4. **案例研究**（25分）：
+   <span class="k">-</span> 选择实际问题
+   <span class="k">-</span> 应用解释技术
+   <span class="k">-</span> 得出洞察结论
+
+&lt;details markdown=&quot;1&quot;&gt;
+&lt;summary&gt;练习答案&lt;/summary&gt;
+
+**可解释性应用系统**：
+
+1. **统一工具平台**：
+
+   架构设计：
+</code></pre></div>
+
+<p>API层：</p>
+<ul>
+<li>统一接口规范</li>
+<li>适配器模式</li>
+<li>异步调用</li>
+</ul>
+<p>class ExplainabilityPlatform:
+    def <strong>init</strong>(self):
+        self.tools = {
+            'attention': AttentionAnalyzer(),
+            'attribution': AttributionAnalyzer(),
+            'probe': ProbeAnalyzer(),
+            'circuit': CircuitAnalyzer()
+        }</p>
+<div class="codehilite"><pre><span></span><code><span class="n">def</span><span class="w"> </span><span class="n">analyze</span><span class="p">(</span><span class="n">self</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="k">data</span><span class="p">,</span><span class="w"> </span><span class="n">methods</span><span class="p">)</span><span class="err">:</span>
+<span class="w">    </span><span class="n">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">{}</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="k">method</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nl">methods</span><span class="p">:</span>
+<span class="w">        </span><span class="n">results</span><span class="o">[</span><span class="n">method</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">self</span><span class="p">.</span><span class="n">tools</span><span class="o">[</span><span class="n">method</span><span class="o">]</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="k">data</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">self</span><span class="p">.</span><span class="k">aggregate</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>   批处理优化：
+
+   <span class="k">-</span> 并行处理
+   <span class="k">-</span> 结果缓存
+   <span class="k">-</span> 增量更新
+
+2. **标准化分析流程**：
+
+   分析模板：
+</code></pre></div>
+
+<p>标准流程：</p>
+<ol>
+<li>
+<p>健康检查
+   - 模型完整性
+   - 数据质量
+   - 计算资源</p>
+</li>
+<li>
+<p>基础分析
+   - 性能基准
+   - 基本统计
+   - 错误分布</p>
+</li>
+<li>
+<p>深度分析
+   - 注意力模式
+   - 神经元功能
+   - 因果关系</p>
+</li>
+<li>
+<p>综合报告
+   - 执行摘要
+   - 详细发现
+   - 改进建议</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>   自动化脚本：
+
+```yaml
+pipeline:
+
+  <span class="k">-</span> name: data_quality
+    params: {threshold: 0.95}
+
+  <span class="k">-</span> name: attention_analysis
+    params: {layers: all, heads: all}
+
+  <span class="k">-</span> name: neuron_importance
+    params: {top_k: 100}
+
+  <span class="k">-</span> name: report_generation
+    params: {format: html, detail: high}
+</code></pre></div>
+
+<ol start="3">
+<li><strong>现代化用户界面</strong>：</li>
+</ol>
+<p>前端设计：</p>
+<div class="codehilite"><pre><span></span><code>组件架构：
+
+- React/Vue框架
+- D3.js可视化
+- WebGL 3D渲染
+
+核心功能：
+
+1. 拖拽式分析流程设计
+2. 实时数据流可视化
+3. 交互式3D网络探索
+4. 协作标注和分享
+</code></pre></div>
+
+<p>交互特性：</p>
+<div class="codehilite"><pre><span></span><code>- 智能提示
+- 上下文帮助  
+- 快捷键支持
+- 多语言界面
+</code></pre></div>
+
+<ol start="4">
+<li><strong>偏见检测案例</strong>：</li>
+</ol>
+<p>问题定义：</p>
+<div class="codehilite"><pre><span></span><code>任务：检测语言模型中的性别偏见
+数据：职业描述数据集
+目标：量化和定位偏见
+</code></pre></div>
+
+<p>分析过程：
+   ```</p>
+<ol>
+<li>
+<p>准备对比数据集</p>
+<ul>
+<li>性别中性版本</li>
+<li>性别标记版本</li>
+</ul>
+</li>
+<li>
+<p>提取内部表示</p>
+<ul>
+<li>各层激活值</li>
+<li>注意力模式</li>
+</ul>
+</li>
+<li>
+<p>偏见量化</p>
+<ul>
+<li>表示空间距离</li>
+<li>预测概率差异</li>
+<li>统计显著性测试</li>
+</ul>
+</li>
+<li>
+<p>定位偏见来源</p>
+<ul>
+<li>关键神经元识别</li>
+<li>偏见传播路径</li>
+<li>训练数据追溯</li>
+</ul>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>改进方案：
+</code></pre></div>
+
+<ul>
+<li>针对性去偏</li>
+<li>公平性约束训练</li>
+<li>持续监控机制</li>
+</ul>
+<p>```</p>
+<p>这个应用系统使可解释性技术真正服务于实际需求。</p>
+</details>
+<h3 id="_4">⚡ 设计选择</h3>
+<ol>
+<li><strong>通用vs定制</strong>：通用平台灵活，定制工具专业</li>
+<li><strong>自动vs手动</strong>：自动化高效，手动分析深入</li>
+<li><strong>技术vs业务</strong>：技术视角准确，业务视角实用</li>
+<li><strong>批量vs实时</strong>：批量分析全面，实时分析及时</li>
+</ol>
+<h3 id="_5">🔬 研究方向</h3>
+<ol>
+<li><strong>解释的解释</strong>：元级别的可解释性</li>
+<li><strong>因果解释</strong>：超越相关性的解释</li>
+<li><strong>反事实解释</strong>：如果...会怎样</li>
+<li><strong>解释压缩</strong>：最简充分解释</li>
+</ol>
+<h2 id="_6">本章小结</h2>
+<p>本章深入探讨了理解大型语言模型内部机制的各种方法。关键要点：</p>
+<ol>
+<li><strong>注意力分析</strong>：通过可视化和干预实验理解信息流动</li>
+<li><strong>神经元解释</strong>：从个体到群体理解功能表示</li>
+<li><strong>探测任务</strong>：通过诊断分类器揭示内部知识</li>
+<li><strong>因果追踪</strong>：发现完成特定任务的最小电路</li>
+<li><strong>机械解释性</strong>：追求完全理解模型的计算机制</li>
+<li><strong>实践工具</strong>：将理论方法应用到实际问题</li>
+</ol>
+<p>这些技术不仅帮助我们理解模型，更重要的是指导我们改进模型、确保安全、建立信任。随着模型规模的增长，可解释性研究变得越来越重要。下一章我们将探讨评测基准与实际应用。</p>
+<hr />
+<p><a href="#section5">← 上一节：机械解释性</a> | <a href="chapter12.html">下一章：评测基准与实际应用 →</a></p>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter10.html" class="nav-link prev">← 第10章：推理优化与系统设计</a><a href="chapter12.html" class="nav-link next">第12章：评测基准与实际应用 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

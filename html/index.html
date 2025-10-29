@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>大型语言模型(LLM)设计与实现教程</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item active" >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">大型语言模型(LLM)设计与实现教程</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第1章: Transformer架构深度剖析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第2章: GPT预训练原理与设计选择</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第3章：微调技术与对齐方法</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第4章：强化学习与RLHF深度解析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第5章：长思维链与推理能力培养</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第6章：最新架构创新</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第7章：数据工程：预训练、后训练与合成数据</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第8章：训练基础设施I：无损加速技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第9章：训练基础设施II：有损压缩与量化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter10.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第10章：推理优化与系统设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第11章：可解释AI与模型内部机制</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第12章：评测基准与实际应用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">LLM tutorial 项目说明</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="README.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">语言模型全面教程</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="llm">大型语言模型(LLM)设计与实现教程</h1>
+<h2 id="_1">课程简介</h2>
+<p>本教程深入探讨以GPT为核心的大型语言模型的设计、训练和推理全流程。课程特色在于：</p>
+<ul>
+<li>深度剖析每个设计选择背后的原理，探讨替代方案</li>
+<li>大量理论与实践相结合的习题（答案默认折叠）</li>
+<li>提供丰富的研究线索和开放问题</li>
+<li>涵盖最新的架构创新和工程实践</li>
+</ul>
+<h2 id="_2">前置知识要求</h2>
+<p>本教程假设读者已掌握：</p>
+<ul>
+<li><strong>数学基础</strong>: 概率论、线性代数、微积分</li>
+<li><strong>深度学习基础</strong>: 神经网络原理、反向传播、优化算法</li>
+<li><strong>PyTorch经验</strong>: 熟悉张量操作、自动微分、模型构建</li>
+<li><strong>编程能力</strong>: Python编程、基本的算法和数据结构</li>
+</ul>
+<h2 id="_3">章节目录</h2>
+<h3 id="1-transformer"><a href="chapter1.html">第1章: Transformer架构深度剖析</a></h3>
+<p>深入理解Transformer的每个组件，探讨设计选择和替代方案</p>
+<ul>
+<li>注意力机制的数学本质与变体</li>
+<li>位置编码的多种实现方式</li>
+<li>层归一化的位置选择</li>
+<li>残差连接的作用机制</li>
+</ul>
+<h3 id="2-gpt"><a href="chapter2.html">第2章: GPT预训练原理与设计选择</a></h3>
+<p>从自回归语言建模到大规模预训练的完整流程</p>
+<ul>
+<li>自回归vs其他预训练目标</li>
+<li>训练数据的组织与采样策略</li>
+<li>优化器选择与学习率调度</li>
+<li>训练稳定性技术</li>
+</ul>
+<h3 id="3"><a href="chapter3.html">第3章: 微调技术与对齐方法</a></h3>
+<p>从预训练模型到实用系统的关键技术</p>
+<ul>
+<li>监督微调(SFT)的最佳实践</li>
+<li>参数高效微调技术(LoRA, QLoRA等)</li>
+<li>指令遵循能力的培养</li>
+<li>基础对齐方法概览</li>
+</ul>
+<h3 id="4-rlhf"><a href="chapter4.html">第4章: 强化学习与RLHF深度解析</a></h3>
+<p>从人类反馈中学习的理论与实践</p>
+<ul>
+<li>RL基础与策略梯度方法</li>
+<li>RLHF的完整流程剖析</li>
+<li>PPO vs DPO vs IPO等算法对比</li>
+<li>奖励模型的设计与训练</li>
+<li>Constitutional AI与自我改进</li>
+</ul>
+<h3 id="5"><a href="chapter5.html">第5章: 长思维链与推理能力培养</a></h3>
+<p>提升LLM深度推理能力的技术</p>
+<ul>
+<li>Chain-of-Thought的演进历程</li>
+<li>长CoT的训练与推理权衡</li>
+<li>RLVR与过程奖励模型</li>
+<li>推理过程的验证与纠错</li>
+<li>思维树与其他搜索策略</li>
+<li>数学与代码推理的特殊考虑</li>
+</ul>
+<h3 id="6"><a href="chapter6.html">第6章: 最新架构创新</a></h3>
+<p>前沿架构设计与未来方向</p>
+<ul>
+<li>混合专家模型(MoE)与稀疏激活</li>
+<li>长上下文处理技术</li>
+<li>非Transformer架构(RWKV, Mamba/SSM)</li>
+<li>多模态扩展架构</li>
+<li>开放研究问题</li>
+</ul>
+<h3 id="7"><a href="chapter7.html">第7章: 数据工程：预训练、后训练与合成数据</a></h3>
+<p>高质量数据的构建与管理</p>
+<ul>
+<li>预训练数据的清洗与去重</li>
+<li>后训练数据的收集与标注</li>
+<li>合成数据生成技术：自举、对抗过滤、质量控制</li>
+<li>Constitutional AI的数据生成</li>
+<li>数据配比与课程学习</li>
+<li>数据质量评估方法</li>
+</ul>
+<h3 id="8-i"><a href="chapter8.html">第8章: 训练基础设施I：无损加速技术</a></h3>
+<p>大规模训练的分布式系统与优化</p>
+<ul>
+<li>数据并行(DP)与张量并行(TP)</li>
+<li>流水线并行(PP)与序列并行</li>
+<li>ZeRO优化器状态分片</li>
+<li>FlashAttention系列技术</li>
+<li>Ring/Paged Attention</li>
+<li>激活重计算与梯度检查点</li>
+<li>混合精度训练(bf16/fp16)</li>
+<li>异步训练与多数据中心训练</li>
+<li>故障恢复与检查点管理</li>
+</ul>
+<h3 id="9-ii"><a href="chapter9.html">第9章: 训练基础设施II：有损压缩与量化</a></h3>
+<p>模型压缩与效率优化技术</p>
+<ul>
+<li>量化技术全景：INT8/INT4/FP4/FP8/二值化</li>
+<li>Token剪枝与动态稀疏</li>
+<li>层融合与架构简化</li>
+<li>知识蒸馏方法</li>
+<li>训练时压缩vs推理时压缩</li>
+<li>精度-效率权衡分析</li>
+</ul>
+<h3 id="10"><a href="chapter10.html">第10章: 推理优化与系统设计</a></h3>
+<p>高效部署LLM的工程实践</p>
+<ul>
+<li>KV缓存优化策略</li>
+<li>批处理与极大规模batching</li>
+<li>推测解码(Speculative Decoding)变体</li>
+<li>Flash Decoding技术</li>
+<li>CPU/SSD卸载技术</li>
+<li>分布式推理架构</li>
+<li>Continuous batching for推理</li>
+</ul>
+<h3 id="11-ai"><a href="chapter11.html">第11章: 可解释AI与模型内部机制</a></h3>
+<p>理解LLM的内部工作原理</p>
+<ul>
+<li>机械可解释性方法论</li>
+<li>稀疏自编码器(SAE)技术</li>
+<li>权重编辑与模型修改</li>
+<li>注意力模式分析</li>
+<li>知识定位与提取</li>
+<li>电路发现与功能分解</li>
+</ul>
+<h3 id="12"><a href="chapter12.html">第12章: 评测基准与实际应用</a></h3>
+<p>从实验室到生产环境</p>
+<ul>
+<li>主流评测基准深度分析</li>
+<li>自定义benchmark设计方法论</li>
+<li>幻觉与对齐税的量化评测</li>
+<li>评测的局限性与改进方向</li>
+<li>实际应用中的挑战</li>
+<li>产品化考虑因素</li>
+<li>案例研究与最佳实践</li>
+</ul>
+<h2 id="_4">学习建议</h2>
+<ol>
+<li><strong>循序渐进</strong>: 虽然每章相对自包含，但建议按顺序学习以获得最佳体验</li>
+<li><strong>动手实践</strong>: 完成每章的编程练习，加深理解</li>
+<li><strong>深入研究</strong>: 追踪提供的研究线索，探索感兴趣的方向</li>
+<li><strong>批判思考</strong>: 思考每个设计选择的trade-off，没有完美的方案</li>
+</ol>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter1.html" class="nav-link next">第1章: Transformer架构深度剖析 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>
